@@ -155,83 +155,12 @@ sleep、wait、join 方法都会让线程进入阻塞状态，打断线程会清
 
 打断正常运行的线程：不会清空打断状态（true）---InterruptDemo.java
 
-_终止模式---TwoPhaseTerminationDemo.java_
+_终止模式_
 
 终止模式之两阶段终止模式：Two Phase Termination
 
 在一个线程 T1 中如何优雅终止线程 T2？优雅指的是给 T2 一个后置处理器
 
-# 练习：两个线程依次输出1到100之间的数字
-
-此处wait与notify顺序可以变换，其中notify是唤醒同一锁上正在等待的其他线程之一，而wait是让自己进入等待状态释放锁。
-
-```java
-public class AlternatePrint {
-
-    private static final Object lock = new Object();
-    private static int count = 1;
-
-    public static void main(String[] args) {
-        Thread t1 = new Thread(() -> {
-            synchronized (lock) {
-                while (count <= 100) {
-                    System.out.println(Thread.currentThread().getName() + ": " + count++);
-                    lock.notify();  // 通知t2继续执行
-                    try {
-                        if (count <= 100) {
-                            lock.wait();  // 进入等待状态，等待t2的通知
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }, "Thread-1");
-
-        Thread t2 = new Thread(() -> {
-            synchronized (lock) {
-                while (count <= 100) {
-                    System.out.println(Thread.currentThread().getName() + ": " + count++);
-                    lock.notify();  // 通知t1继续执行
-                    try {
-                        if (count <= 100) {
-                            lock.wait();  // 进入等待状态，等待t1的通知
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }, "Thread-2");
-
-        t1.start();
-        t2.start();
-    }
-}
-```
-
-# **查看线程**
-
-_Linux_
-
-    ps -ef 查看所有进程
-    ps -fT -p 查看某个进程（PID）的所有线程
-    kill 杀死进程
-    top 按大写 H 切换是否显示线程
-    top -H -p 查看某个进程（PID）的所有线程
-
-_Windows_
-
-    任务管理器可以查看进程和线程数，也可以用来杀死进程
-    tasklist 查看进程
-    taskkill 杀死进程
-
-_Java_
-
-    jps 命令查看所有 Java 进程
-    jstack 查看某个 Java 进程（PID）的所有线程状态
-    jconsole 来查看某个 Java 进程中线程的运行情况（图形界面）
 
 
-# **同步**
 
