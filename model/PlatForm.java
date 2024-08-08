@@ -1,8 +1,8 @@
 package model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+//import lombok.AllArgsConstructor;
+//import lombok.Data;
+//import lombok.NoArgsConstructor;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * @github https://github.com/bodyzxy
  * @date 2024/8/6 12:51
  */
-@Data
+//@Data
 public class PlatForm {
 
     private String name;
