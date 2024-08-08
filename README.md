@@ -116,3 +116,98 @@ get() 线程会阻塞等待任务执行完成
 run() 执行完后会把结果设置到 FutureTask 的一个成员变量，get() 线程可以获取到该变量的值
 ```
 
+# Thread类API
+
+```angular2html
+public void start()	                       启动一个新线程，Java虚拟机调用此线程的 run 方法
+public void run()	                       线程启动后调用该方法
+public void setName(String name)	       给当前线程取名字
+public void getName()	                   获取当前线程的名字
+                                           线程存在默认名称：子线程是 Thread-索引，主线程是 main
+public static Thread currentThread()	   获取当前线程对象，代码在哪个线程中执行
+public static void sleep(long time)	       让当前线程休眠多少毫秒再继续执行
+Thread.sleep(0) :                          让操作系统立刻重新进行一次 CPU 竞争
+public static native void yield()	       提示线程调度器让出当前线程对 CPU 的使用
+public final int getPriority()	           返回此线程的优先级
+public final void setPriority(int priority)	更改此线程的优先级，常用 1 5 10
+public void interrupt()	                   中断这个线程，异常处理机制
+public static boolean interrupted()	       判断当前线程是否被打断，清除打断标记
+public boolean isInterrupted()	           判断当前线程是否被打断，不清除打断标记
+public final void join()	                   等待这个线程结束
+public final void join(long millis)	       等待这个线程死亡 millis 毫秒，0 意味着永远等待
+public final native boolean isAlive()	   线程是否存活（还没有运行完毕）
+public final void setDaemon(boolean on)	   将此线程标记为守护线程或用户线程
+```
+
+_打断线程--interrupt_
+
+```angular2html
+public void interrupt()：打断这个线程，异常处理机制
+
+public static boolean interrupted()：判断当前线程是否被打断，打断返回 true，清除打断标记，连续调用两次一定返回 false
+
+public boolean isInterrupted()：判断当前线程是否被打断，不清除打断标记
+
+打断的线程会发生上下文切换，操作系统会保存线程信息，抢占到 CPU 后会从中断的地方接着运行（打断不是停止）
+```
+
+sleep、wait、join 方法都会让线程进入阻塞状态，打断线程会清空打断状态（false）---InterruptDemo.java
+
+打断正常运行的线程：不会清空打断状态（true）---InterruptDemo.java
+
+_终止模式---TwoPhaseTerminationDemo.java_
+
+终止模式之两阶段终止模式：Two Phase Termination
+
+在一个线程 T1 中如何优雅终止线程 T2？优雅指的是给 T2 一个后置处理器
+
+# 练习：两个线程依次输出1到100之间的数字
+
+此处wait与notify顺序可以变换，其中notify是唤醒同一锁上正在等待的其他线程之一，而wait是让自己进入等待状态释放锁。
+
+```java
+public class AlternatePrint {
+
+    private static final Object lock = new Object();
+    private static int count = 1;
+
+    public static void main(String[] args) {
+        Thread t1 = new Thread(() -> {
+            synchronized (lock) {
+                while (count <= 100) {
+                    System.out.println(Thread.currentThread().getName() + ": " + count++);
+                    lock.notify();  // 通知t2继续执行
+                    try {
+                        if (count <= 100) {
+                            lock.wait();  // 进入等待状态，等待t2的通知
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }, "Thread-1");
+
+        Thread t2 = new Thread(() -> {
+            synchronized (lock) {
+                while (count <= 100) {
+                    System.out.println(Thread.currentThread().getName() + ": " + count++);
+                    lock.notify();  // 通知t1继续执行
+                    try {
+                        if (count <= 100) {
+                            lock.wait();  // 进入等待状态，等待t1的通知
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }, "Thread-2");
+
+        t1.start();
+        t2.start();
+    }
+}
+```
+
+
