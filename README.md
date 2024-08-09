@@ -235,3 +235,197 @@ _Java_
 
 # **同步**
 
+_synchronized---SynchronizedDemo.java_
+
+锁对象：理论上是任意的唯一对象
+
+synchronized是可重入，不公平的重量级锁
+
+原则
+
+    锁对象建议使用共享资源
+    在实例中使用this作为锁对象，锁住this的正是共享资源
+    在静态方法中使用类名.class字节码作为锁对象，因为静态变量属于类，被所有实例对象共享，所以需要锁住类。
+
+```java
+synchronized(锁对象){
+    //访问共享资源核心代码
+        }
+```
+
+_同步方法_
+
+把出现安全问题的核心代码锁起来，每次只有一个线程进去访问。
+
+synchronized 修饰的方法的不具备继承性，所以子类是线程不安全的，如果子类的方法也被 synchronized 修饰，两个锁对象其实是一把锁，而且是子类对象作为锁
+
+```java
+//同步方法
+修饰符 synchronized 返回值类型 方法名(方法参数) { 
+	方法体；
+}
+//同步静态方法
+修饰符 static synchronized 返回值类型 方法名(方法参数) { 
+	方法体；
+}
+```
+
+如果方法是实例方法：同步方法默认this作为锁对象
+
+```java
+public synchronized void test(){} //等价于
+public void test(){
+    synchronized (this){
+        
+    }
+}
+```
+
+如果方法是静态方法，同步方法默认使用类名.class作为锁对象
+
+```java
+class Test{
+    public synchronized static void test(){}
+}
+//等价于
+class Test{
+    public void test(){
+        synchronized (Test.class){
+            
+        }
+    }
+}
+```
+
+_线程八锁_
+
+主要关注锁对象是不是同一个
+
+锁住类对象，所有类的实例的方法都是安全的，类的所有实例都相当于同一把锁
+
+锁住 this 对象，只有在当前实例对象的线程内是安全的，如果有多个实例就不安全
+
+## 举例
+
+因为 n1 调用 a() 方法，锁住的是类对象，n2 调用 b() 方法，锁住的也是类对象，所以线程安全
+
+```java
+class Test{
+    public synchronized static void a(){
+        Thread.sleep(1000);
+        System.out.println("a");
+    }
+    public synchronized static void b(){ //此处若不加static则创建t2是会新建一个b()的方法导致t1和t2锁的对象不一致
+        Thread.sleep(1000);
+        System.out.println("b");
+    }
+}
+public static void main(String[] args){
+    Test t1 = new Test();
+    Test t2 = new Test();
+    new Thread(() -> {t1.a();}).start();
+    new Thread(() -> {t2.b();}).start();
+}
+```
+
+## 锁升级
+
+### 升级过程
+
+synchronized 是可重入、不公平的重量级锁，所以可以对其进行优化
+
+```java
+无锁 -> 偏向锁 -> 轻量级锁 -> 重量级锁  //随着竞争的增加，只能升级锁不能降级
+```
+
+### 偏向锁
+
+偏向锁的思想是偏向于让第一个获取锁对象的线程，这个线程之后重新获取该锁不再需要同步操作：
+
+当锁对象第一次被线程获得的时候进入偏向状态，标记为 101，同时使用 CAS 操作将线程 ID 记录到 Mark Word。如果 CAS 操作成功，这个线程以后进入这个锁相关的同步块，查看这个线程 ID 是自己的就表示没有竞争，就不需要再进行任何同步操作
+
+当有另外一个线程去尝试获取这个锁对象时，偏向状态就宣告结束，此时撤销偏向（Revoke Bias）后恢复到未锁定或轻量级锁状态
+
+一个对象创建时：
+
+如果开启了偏向锁（默认开启），那么对象创建后，MarkWord 值为 0x05 即最后 3 位为 101，thread、epoch、age 都为 0
+
+偏向锁是默认是延迟的，不会在程序启动时立即生效，如果想避免延迟，可以加 VM 参数 -XX:BiasedLockingStartupDelay=0 来禁用延迟。JDK 8 延迟 4s 开启偏向锁原因：在刚开始执行代码时，会有好多线程来抢锁，如果开偏向锁效率反而降低
+
+当一个对象已经计算过 hashCode，就再也无法进入偏向状态了
+
+添加 VM 参数 -XX:-UseBiasedLocking 禁用偏向锁
+
+撤销偏向锁的状态：
+
+调用对象的 hashCode：偏向锁的对象 MarkWord 中存储的是线程 id，调用 hashCode 导致偏向锁被撤销
+当有其它线程使用偏向锁对象时，会将偏向锁升级为轻量级锁
+调用 wait/notify，需要申请 Monitor，进入 WaitSet
+批量撤销：如果对象被多个线程访问，但没有竞争，这时偏向了线程 T1 的对象仍有机会重新偏向 T2，重偏向会重置对象的 Thread ID
+
+批量重偏向：当撤销偏向锁阈值超过 20 次后，JVM 会觉得是不是偏向错了，于是在给这些对象加锁时重新偏向至加锁线程
+
+批量撤销：当撤销偏向锁阈值超过 40 次后，JVM 会觉得自己确实偏向错了，根本就不该偏向，于是整个类的所有对象都会变为不可偏向的，新建的对象也是不可偏向的
+
+### 轻量级锁
+
+一个对象被多个线程进行加锁，但加锁的时间是错开的（没有竞争），可以使用轻量级锁实现，轻量级锁对使用者是透明的（不可见）
+
+可重入锁：线程可以进入任何一个它已经拥有的锁所同步的代码块，可重入锁最大的作用是避免死锁。
+
+轻量级锁在没有竞争时（锁重入时），每次重入仍然需要执行 CAS 操作，Java 6 才引入的偏向锁来优化
+
+_锁重入实例_
+
+```java
+static final Object obj = new Object();
+
+public static void method1(){
+    synchronized (obj){
+        //同步块A
+        method2();
+    }
+}
+
+public static void method2(){
+    synchronized (obj){
+        //同步块B
+    }
+}
+```
+
+创建锁记录对象，每个线程的栈帧都会包含一个锁记录的结构，存储锁定对象的Mark Word
+
+让锁记录中Object reference指向锁住的对象，并尝试用CAS替换Object的Mark Word，将Mark Word的值存入锁记录
+
+如果CAS替换成功。对象头中存储了锁记录地址和状态00（轻量级锁），表示线程给对象加锁
+
+如果CAS失败，有两种情况
+
+    如果是其他线程已经持有了该Object的轻量级锁，这时表明有竞争，进入锁膨胀过程
+    如果线程自己执行了synchronized锁重入，就添加一条Lock Record作为重入计数
+
+当退出synchronized代码块（解锁时）
+
+    如果有取值为null的锁记录，表示有重入，这时重置锁记录，表示重入计数减1
+    如果锁记录不为null，这时使用CAS将Mark Word的值恢复给对象头
+        成功，则解锁成功
+        失败，说明轻量级锁进行了锁膨胀或已经升级为重量级锁，进入重量级锁解锁流程
+
+### 锁膨胀
+
+在尝试加轻量级锁的过程中，CAS操作无法成功。可能是其他线程为此对象加上了轻量级锁（有竞争）。这时需要进行锁膨胀，轻量级锁
+变为重量级锁
+
+当Thread-1进行轻量级加锁时，Thread-0已经对该对象加了轻量级锁
+
+![alt](image/img.png)
+
+Thread-1加轻量级锁失败，进入锁膨胀流程：为Object对象申请Monitor锁。通过Object对象头获取到持锁线程。将Monitor的Owner
+设置为Thread-0。将Object的对象头指向重量级锁地址，然后自己进入Monitor的EntryList BLOCKED
+
+![alt](image/img_1.png)
+
+当线程Thread-0退出同步代码块解锁时，使用CAS将Mark Word的值恢复给对象头失败，这时进入重量级解锁流程，及按照Monitor地址找到
+Monitor对象。设置Owner为null。唤醒EntryList中BLOCKED线程。
+

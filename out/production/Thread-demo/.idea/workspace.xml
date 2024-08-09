@@ -5,9 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/InterruptDemo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Thread-demo.iml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,11 +45,13 @@
     "Application.GetPriceDemo.executor": "Run",
     "Application.InterruptDemo.executor": "Run",
     "Application.LockSupportDemo.executor": "Run",
+    "Application.TwoPhaseTerminationDemo.executor": "Debug",
     "Downloaded.Files.Path.Enabled": "false",
     "Repository.Attach.Annotations": "false",
     "Repository.Attach.JavaDocs": "false",
     "Repository.Attach.Sources": "false",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/zxy/AllProject/java/Thread-demo",
@@ -65,35 +67,14 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Application.InterruptDemo">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.SynchronizedDemo">
     <configuration name="CallableDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="src.CallableDemo" />
-      <module name="Thread-demo" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="src.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="CompletableFutureApi3Demo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.CompletableFutureApi3Demo" />
-      <module name="Thread-demo" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="src.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="CompletableFutureApiDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.CompletableFutureApiDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -131,13 +112,39 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="SynchronizedDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.SynchronizedDemo" />
+      <module name="Thread-demo" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="src.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TwoPhaseTerminationDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.TwoPhaseTerminationDemo" />
+      <module name="Thread-demo" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="src.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.SynchronizedDemo" />
+        <item itemvalue="Application.TwoPhaseTerminationDemo" />
         <item itemvalue="Application.InterruptDemo" />
         <item itemvalue="Application.CallableDemo" />
         <item itemvalue="Application.LockSupportDemo" />
-        <item itemvalue="Application.CompletableFutureApi3Demo" />
-        <item itemvalue="Application.CompletableFutureApiDemo" />
       </list>
     </recent_temporary>
   </component>
@@ -163,7 +170,8 @@
       <workItem from="1723108922353" duration="140000" />
       <workItem from="1723109094068" duration="2028000" />
       <workItem from="1723116089412" duration="36000" />
-      <workItem from="1723116153696" duration="105000" />
+      <workItem from="1723116153696" duration="3639000" />
+      <workItem from="1723170794975" duration="2071000" />
     </task>
     <servers />
   </component>
