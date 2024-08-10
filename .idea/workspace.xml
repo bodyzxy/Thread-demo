@@ -4,26 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/image/img_2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_4.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_5.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_6.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_7.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Dead.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/NotifyAllDemo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SpinLock.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/TestLiveLock.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Thread-demo.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/src/SynchronizedDemo.class" beforeDir="false" />
-    </list>
+    <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -72,7 +53,6 @@
     "Repository.Attach.Sources": "false",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/zxy/AllProject/java/Thread-demo/out/production/Thread-demo/src",
     "node.js.detected.package.eslint": "true",
@@ -197,7 +177,7 @@
       <workItem from="1723255930653" duration="19000" />
       <workItem from="1723255972303" duration="397000" />
       <workItem from="1723256388724" duration="51000" />
-      <workItem from="1723256465808" duration="8933000" />
+      <workItem from="1723256465808" duration="9309000" />
     </task>
     <servers />
   </component>
