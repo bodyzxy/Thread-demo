@@ -235,7 +235,7 @@ _Java_
 
 # **同步**
 
-_synchronized---SynchronizedDemo.java_
+# 同步--synchronized---SynchronizedDemo.java
 
 锁对象：理论上是任意的唯一对象
 
@@ -253,7 +253,7 @@ synchronized(锁对象){
         }
 ```
 
-_同步方法_
+### 同步方法
 
 把出现安全问题的核心代码锁起来，每次只有一个线程进去访问。
 
@@ -297,7 +297,7 @@ class Test{
 }
 ```
 
-_线程八锁_
+### 线程八锁
 
 主要关注锁对象是不是同一个
 
@@ -327,6 +327,38 @@ public static void main(String[] args){
     new Thread(() -> {t2.b();}).start();
 }
 ```
+
+## 锁原理
+
+### Monitor
+
+Monitor 被翻译为监视器或管程
+
+每个 Java 对象都可以关联一个 Monitor 对象，Monitor 也是 class，其实例存储在堆中，如果使用 synchronized 给对象上锁（重量级）之后，该对象头的 Mark Word 中就被设置指向 Monitor 对象的指针，这就是重量级锁
+
+Mark Word 结构：最后两位是锁标志位
+
+![alt](image/img_4.png)
+
+64 位虚拟机 Mark Word：
+
+![alt](image/img_5.png)
+
+工作流程：
+
+开始时 Monitor 中 Owner 为 null
+
+当 Thread-2 执行 synchronized(obj) 就会将 Monitor 的所有者 Owner 置为 Thread-2，Monitor 中只能有一个 Owner，obj 对象的 Mark Word 指向 Monitor，把对象原有的 MarkWord 存入线程栈中的锁记录中（轻量级锁部分详解）
+
+在 Thread-2 上锁的过程，Thread-3、Thread-4、Thread-5 也执行 synchronized(obj)，就会进入 EntryList BLOCKED（双向链表）
+
+Thread-2 执行完同步代码块的内容，根据 obj 对象头中 Monitor 地址寻找，设置 Owner 为空，把线程栈的锁记录中的对象头的值设置回 MarkWord
+
+唤醒 EntryList 中等待的线程来竞争锁，竞争是非公平的，如果这时有新的线程想要获取锁，可能直接就抢占到了，阻塞队列的线程就会继续阻塞
+
+WaitSet 中的 Thread-0，是以前获得过锁，但条件不满足进入 WAITING 状态的线程（wait-notify 机制）
+
+
 
 ## 锁升级
 
@@ -428,4 +460,229 @@ Thread-1加轻量级锁失败，进入锁膨胀流程：为Object对象申请Mon
 
 当线程Thread-0退出同步代码块解锁时，使用CAS将Mark Word的值恢复给对象头失败，这时进入重量级解锁流程，及按照Monitor地址找到
 Monitor对象。设置Owner为null。唤醒EntryList中BLOCKED线程。
+
+### 锁优化
+
+重量级锁竞争时，尝试获取锁的线程不会立即阻塞，可以使用自旋（默认10次）来进行优化。采用循环的方式尝试获取锁
+
+_注意_
+
+    自旋锁占用CPU时间，单核CPU自旋就是在浪费时间，因为同一时刻只能运行一个线程，多核CPU自旋才能发挥优势
+    自旋失败的线程进入阻塞状态
+
+优点：不会进入阻塞状态，减少线程上下文切换消耗
+缺点：当自旋的线程越来越多时，会不断消耗CPU资源
+
+_自旋锁情况_
+
+![alt](image/img_2.png)
+
+![alt](image/img_3.png)
+
+### 手写自旋锁---SpinLock.java
+
+### 锁消除
+
+锁消除是指对于被检测出不可能存在竞争的共享数据的锁进行消除，这是 JVM 即时编译器的优化
+
+锁消除主要是通过逃逸分析来支持，如果堆上的共享数据不可能逃逸出去被其它线程访问到，那么就可以把它们当成私有数据对待，也就可以将它们的锁进行消除（同步消除：JVM 逃逸分析）
+
+### 锁相化
+
+对相同对象多次加锁，导致线程发生多次重入，频繁的加锁操作就会导致性能消耗，可以使用锁相化方式优化
+
+如果虚拟机探测到一串的操作都对同一个对象加锁，将会把加锁的范围扩展到整个操作序列的外部
+
+一些看起来没有加锁的代码，其实隐式的加了很多锁
+
+```java
+public static String concatString(String s1, String s2, String s3) {
+    return s1 + s2 + s3;
+}
+```
+
+String 是一个不可变的类，编译器会对 String 的拼接自动优化。在 JDK 1.5 之前，转化为 StringBuffer 对象的连续 append() 操作，每个 append() 方法中都有一个同步块
+
+```java
+public static String concatString(String s1, String s2, String s3) {
+    StringBuffer sb = new StringBuffer();
+    sb.append(s1);
+    sb.append(s2);
+    sb.append(s3);
+    return sb.toString();
+}
+```
+
+扩展到第一个 append() 操作之前直至最后一个 append() 操作之后，只需要加锁一次就可以
+
+## 多把锁
+
+多把不想干的锁：例如一间房子中有两个功能，一个是睡觉，一个是学习，但是只有一间房间（一个对象锁）供使用，那么并发度很低。
+
+将锁的粒度细分：
+    
+    好处：可以增加并发度
+    坏处：如果一个线程需要同时获取多把锁，很容易发生死锁
+
+解决办法：准备多个对象锁
+
+```java
+public static void main(String[] args){
+    
+}
+class Room {  
+    private final Object sleepRoom = new Object();
+    private final Object studyRoom = new Object();
+    
+    public void sleep() throws Exception{
+        synchronized (sleepRoom){
+            System.out.println("sleep 2 小时");
+            Thread.sleep(2000);
+        }
+    }
+    
+    public void study() throws Exception{
+        synchronized (studyRoom){
+            System.out.println("study 1 小时");
+            Thread.sleep(1000);
+        }
+    }
+}
+```
+
+## 活跃性
+
+### 死锁---Dead.java
+
+死锁：多个线程同时被阻塞，它们中的一个或者全部都在等待某个资源被释放，由于线程被无限期地阻塞，因此程序不可能正常终止
+
+Java 死锁产生的四个必要条件：
+
+互斥条件，即当资源被一个线程使用（占有）时，别的线程不能使用
+
+不可剥夺条件，资源请求者不能强制从资源占有者手中夺取资源，资源只能由资源占有者主动释放
+
+请求和保持条件，即当资源请求者在请求其他的资源的同时保持对原有资源的占有
+
+循环等待条件，即存在一个等待循环队列：p1 要 p2 的资源，p2 要 p1 的资源，形成了一个等待环路
+
+四个条件都成立的时候，便形成死锁。死锁情况下打破上述任何一个条件，便可让死锁消失
+
+### `rgb(9, 105, 218) 定位---以Dead.java文件为例`
+
+使用 jps 定位进程 id，再用 jstack id 定位死锁，找到死锁的线程去查看源码，解决优化
+
+Linux 下可以通过 top 先定位到 CPU 占用高的 Java 进程，再利用 top -Hp 进程id 来定位是哪个线程，最后再用 jstack 的输出来看各个线程栈
+
+避免死锁：避免死锁要注意加锁顺序
+
+可以使用 jconsole 工具，在 jdk\bin 目录下
+
+### 活锁---TestLiveLock.java
+
+活锁：指的是任务或者执行者没有被阻塞，由于某些条件没有满足，导致一直重复尝试—失败—尝试—失败的过程
+
+两个线程互相改变对方的结束条件，最后谁也无法结束：
+
+### 饥饿
+
+饥饿：一个线程由于优先级太低，始终得不到 CPU 调度执行，也不能够结束
+
+# 同步--Wait-ify
+
+## 基本使用
+
+需要获取对象锁后才可以调用 锁对象.wait()，notify 随机唤醒一个线程，notifyAll 唤醒所有线程去竞争 CPU
+
+Object类API：
+
+```java
+public final void notify():唤醒正在等待对象监视器的单个线程。
+public final void notifyAll():唤醒正在等待对象监视器的所有线程。
+public final void wait():导致当前线程等待，直到另一个线程调用该对象的notify()方法或 notifyAll()方法。
+public final native void wait(long timeout):有时限的等待, 到n毫秒后结束等待，或是被唤醒
+```
+
+说明：wait 是挂起线程，需要唤醒的都是挂起操作，阻塞线程可以自己去争抢锁，挂起的线程需要唤醒后去争抢锁
+
+对比sleep()：
+
+    原理不同：sleep() 方法是属于 Thread 类，是线程用来控制自身流程的，使此线程暂停执行一段时间而把执行机会让给其他线程；wait() 方法属于 Object 类，用于线程间通信
+    对锁的处理机制不同：调用 sleep() 方法的过程中，线程不会释放对象锁，当调用 wait() 方法的时候，线程会放弃对象锁，进入等待此对象的等待锁定池（不释放锁其他线程怎么抢占到锁执行唤醒操作），但是都会释放 CPU
+    使用区域不同：wait() 方法必须放在**同步控制方法和同步代码块（先获取锁）**中使用，sleep() 方法则可以放在任何地方使用
+
+底层原理：
+
+    Owner 线程发现条件不满足，调用 wait 方法，即可进入 WaitSet 变为 WAITING 状态
+    BLOCKED 和 WAITING 的线程都处于阻塞状态，不占用 CPU 时间片
+    BLOCKED 线程会在 Owner 线程释放锁时唤醒
+    WAITING 线程会在 Owner 线程调用 notify 或 notifyAll 时唤醒，唤醒后并不意味者立刻获得锁，需要进入 EntryList 重新竞争
+
+![alt](image/img_6.png)
+
+## 代码优化---NotifyAllDemo.java
+
+虚假唤醒：notify 只能随机唤醒一个 WaitSet 中的线程，这时如果有其它线程也在等待，那么就可能唤醒不了正确的线程
+
+解决方法：采用 notifyAll
+
+notifyAll 仅解决某个线程的唤醒问题，使用 if + wait 判断仅有一次机会，一旦条件不成立，无法重新判断
+
+解决方法：用 while + wait，当条件不成立，再次 wait
+
+# 同步--park-un
+
+LockSupport 是用来创建锁和其他同步类的线程原语
+
+LockSupport 类方法：
+
+LockSupport.park()：暂停当前线程，挂起原语
+
+LockSupport.unpark(暂停的线程对象)：恢复某个线程的运行
+
+```java
+public static void main(String[] args) {
+    Thread t1 = new Thread(() -> {
+        System.out.println("start...");	//1
+		Thread.sleep(1000);// Thread.sleep(3000)
+        // 先 park 再 unpark 和先 unpark 再 park 效果一样，都会直接恢复线程的运行
+        System.out.println("park...");	//2
+        LockSupport.park();
+        System.out.println("resume...");//4
+    },"t1");
+    t1.start();
+   	Thread.sleep(2000);
+    System.out.println("unpark...");	//3
+    LockSupport.unpark(t1);
+}
+```
+
+LockSupport 出现就是为了增强 wait & notify 的功能
+
+    wait，notify 和 notifyAll 必须配合 Object Monitor 一起使用，而 park、unpark 不需要
+    park & unpark 以线程为单位来阻塞和唤醒线程，而 notify 只能随机唤醒一个等待线程，notifyAll 是唤醒所有等待线程
+    park & unpark 可以先 unpark，而 wait & notify 不能先 notify。类比生产消费，先消费发现有产品就消费，没有就等待；先生产就直接产生商品，然后线程直接消费
+    wait 会释放锁资源进入等待队列，park 不会释放锁资源，只负责阻塞当前线程，会释放 CPU
+
+原理：类似生产者消费者:
+
+- 先park：
+  - 当前线程调用 Unsafe.park() 方法
+  - 检查 _counter ，本情况为 0，这时获得 _mutex 互斥锁
+  - 线程进入 _cond 条件变量挂起
+  - 调用 Unsafe.unpark(Thread_0) 方法，设置 _counter 为 1
+  - 唤醒 _cond 条件变量中的 Thread_0，Thread_0 恢复运行，设置 _counter 为 0
+
+![alt](image/img_7.png)
+
+- 先unpark:
+  - 调用 Unsafe.unpark(Thread_0) 方法，设置 _counter 为 1
+  - 当前线程调用 Unsafe.park() 方法
+  - 检查 _counter ，本情况为 1，这时线程无需挂起，继续运行，设置 _counter 为 0
+
+![alt](image/img_8.png)
+
+# 同步--安全分析
+
+
 

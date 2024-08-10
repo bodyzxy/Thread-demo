@@ -5,16 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SynchronizedDemo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_4.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_5.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_6.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_7.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Dead.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/NotifyAllDemo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/SpinLock.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/TestLiveLock.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Thread-demo.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/src/SynchronizedDemo.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,11 +56,15 @@
     "Application.CompletableFutureApiDemo.executor": "Run",
     "Application.CompletableFutureDemo.executor": "Run",
     "Application.CompletableFutureResult.executor": "Run",
+    "Application.Dead.executor": "Run",
     "Application.FutureApiDemo.executor": "Run",
     "Application.GetPriceDemo.executor": "Run",
     "Application.InterruptDemo.executor": "Run",
     "Application.LockSupportDemo.executor": "Run",
+    "Application.NotifyAllDemo.executor": "Run",
+    "Application.SpinLock.executor": "Run",
     "Application.SynchronizedDemo.executor": "Run",
+    "Application.TestLiveLock.executor": "Run",
     "Application.TwoPhaseTerminationDemo.executor": "Debug",
     "Downloaded.Files.Path.Enabled": "false",
     "Repository.Attach.Annotations": "false",
@@ -62,13 +74,13 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/zxy/AllProject/java/Thread-demo",
+    "last_opened_file_path": "/Users/zxy/AllProject/java/Thread-demo/out/production/Thread-demo/src",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Modules",
+    "project.structure.last.edited": "Problems",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.17126437",
     "settings.editor.selected.configurable": "http.proxy",
@@ -77,10 +89,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/out/production/Thread-demo/src" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.SynchronizedDemo">
+  <component name="RunManager" selected="Application.NotifyAllDemo">
     <configuration name="CallableDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="src.CallableDemo" />
       <module name="Thread-demo" />
@@ -94,8 +107,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="InterruptDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.InterruptDemo" />
+    <configuration name="Dead" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.Dead" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -107,8 +120,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="LockSupportDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.LockSupportDemo" />
+    <configuration name="NotifyAllDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.NotifyAllDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -120,8 +133,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SynchronizedDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.SynchronizedDemo" />
+    <configuration name="SpinLock" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.SpinLock" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -133,8 +146,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TwoPhaseTerminationDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.TwoPhaseTerminationDemo" />
+    <configuration name="TestLiveLock" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.TestLiveLock" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -148,11 +161,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.SynchronizedDemo" />
-        <item itemvalue="Application.TwoPhaseTerminationDemo" />
-        <item itemvalue="Application.InterruptDemo" />
+        <item itemvalue="Application.NotifyAllDemo" />
+        <item itemvalue="Application.TestLiveLock" />
+        <item itemvalue="Application.Dead" />
+        <item itemvalue="Application.SpinLock" />
         <item itemvalue="Application.CallableDemo" />
-        <item itemvalue="Application.LockSupportDemo" />
       </list>
     </recent_temporary>
   </component>
@@ -179,7 +192,12 @@
       <workItem from="1723109094068" duration="2028000" />
       <workItem from="1723116089412" duration="36000" />
       <workItem from="1723116153696" duration="3639000" />
-      <workItem from="1723170794975" duration="8322000" />
+      <workItem from="1723170794975" duration="9186000" />
+      <workItem from="1723255786235" duration="140000" />
+      <workItem from="1723255930653" duration="19000" />
+      <workItem from="1723255972303" duration="397000" />
+      <workItem from="1723256388724" duration="51000" />
+      <workItem from="1723256465808" duration="8933000" />
     </task>
     <servers />
   </component>

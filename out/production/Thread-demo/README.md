@@ -235,7 +235,7 @@ _Java_
 
 # **同步**
 
-_synchronized_
+# synchronized---SynchronizedDemo.java
 
 锁对象：理论上是任意的唯一对象
 
@@ -252,4 +252,385 @@ synchronized(锁对象){
     //访问共享资源核心代码
         }
 ```
+
+### 同步方法
+
+把出现安全问题的核心代码锁起来，每次只有一个线程进去访问。
+
+synchronized 修饰的方法的不具备继承性，所以子类是线程不安全的，如果子类的方法也被 synchronized 修饰，两个锁对象其实是一把锁，而且是子类对象作为锁
+
+```java
+//同步方法
+修饰符 synchronized 返回值类型 方法名(方法参数) { 
+	方法体；
+}
+//同步静态方法
+修饰符 static synchronized 返回值类型 方法名(方法参数) { 
+	方法体；
+}
+```
+
+如果方法是实例方法：同步方法默认this作为锁对象
+
+```java
+public synchronized void test(){} //等价于
+public void test(){
+    synchronized (this){
+        
+    }
+}
+```
+
+如果方法是静态方法，同步方法默认使用类名.class作为锁对象
+
+```java
+class Test{
+    public synchronized static void test(){}
+}
+//等价于
+class Test{
+    public void test(){
+        synchronized (Test.class){
+            
+        }
+    }
+}
+```
+
+### 线程八锁
+
+主要关注锁对象是不是同一个
+
+锁住类对象，所有类的实例的方法都是安全的，类的所有实例都相当于同一把锁
+
+锁住 this 对象，只有在当前实例对象的线程内是安全的，如果有多个实例就不安全
+
+## 举例
+
+因为 n1 调用 a() 方法，锁住的是类对象，n2 调用 b() 方法，锁住的也是类对象，所以线程安全
+
+```java
+class Test{
+    public synchronized static void a(){
+        Thread.sleep(1000);
+        System.out.println("a");
+    }
+    public synchronized static void b(){ //此处若不加static则创建t2是会新建一个b()的方法导致t1和t2锁的对象不一致
+        Thread.sleep(1000);
+        System.out.println("b");
+    }
+}
+public static void main(String[] args){
+    Test t1 = new Test();
+    Test t2 = new Test();
+    new Thread(() -> {t1.a();}).start();
+    new Thread(() -> {t2.b();}).start();
+}
+```
+
+## 锁原理
+
+### Monitor
+
+Monitor 被翻译为监视器或管程
+
+每个 Java 对象都可以关联一个 Monitor 对象，Monitor 也是 class，其实例存储在堆中，如果使用 synchronized 给对象上锁（重量级）之后，该对象头的 Mark Word 中就被设置指向 Monitor 对象的指针，这就是重量级锁
+
+Mark Word 结构：最后两位是锁标志位
+
+![alt](image/img_4.png)
+
+64 位虚拟机 Mark Word：
+
+![alt](image/img_5.png)
+
+工作流程：
+
+开始时 Monitor 中 Owner 为 null
+
+当 Thread-2 执行 synchronized(obj) 就会将 Monitor 的所有者 Owner 置为 Thread-2，Monitor 中只能有一个 Owner，obj 对象的 Mark Word 指向 Monitor，把对象原有的 MarkWord 存入线程栈中的锁记录中（轻量级锁部分详解）
+
+在 Thread-2 上锁的过程，Thread-3、Thread-4、Thread-5 也执行 synchronized(obj)，就会进入 EntryList BLOCKED（双向链表）
+
+Thread-2 执行完同步代码块的内容，根据 obj 对象头中 Monitor 地址寻找，设置 Owner 为空，把线程栈的锁记录中的对象头的值设置回 MarkWord
+
+唤醒 EntryList 中等待的线程来竞争锁，竞争是非公平的，如果这时有新的线程想要获取锁，可能直接就抢占到了，阻塞队列的线程就会继续阻塞
+
+WaitSet 中的 Thread-0，是以前获得过锁，但条件不满足进入 WAITING 状态的线程（wait-notify 机制）
+
+
+
+## 锁升级
+
+### 升级过程
+
+synchronized 是可重入、不公平的重量级锁，所以可以对其进行优化
+
+```java
+无锁 -> 偏向锁 -> 轻量级锁 -> 重量级锁  //随着竞争的增加，只能升级锁不能降级
+```
+
+### 偏向锁
+
+偏向锁的思想是偏向于让第一个获取锁对象的线程，这个线程之后重新获取该锁不再需要同步操作：
+
+当锁对象第一次被线程获得的时候进入偏向状态，标记为 101，同时使用 CAS 操作将线程 ID 记录到 Mark Word。如果 CAS 操作成功，这个线程以后进入这个锁相关的同步块，查看这个线程 ID 是自己的就表示没有竞争，就不需要再进行任何同步操作
+
+当有另外一个线程去尝试获取这个锁对象时，偏向状态就宣告结束，此时撤销偏向（Revoke Bias）后恢复到未锁定或轻量级锁状态
+
+一个对象创建时：
+
+如果开启了偏向锁（默认开启），那么对象创建后，MarkWord 值为 0x05 即最后 3 位为 101，thread、epoch、age 都为 0
+
+偏向锁是默认是延迟的，不会在程序启动时立即生效，如果想避免延迟，可以加 VM 参数 -XX:BiasedLockingStartupDelay=0 来禁用延迟。JDK 8 延迟 4s 开启偏向锁原因：在刚开始执行代码时，会有好多线程来抢锁，如果开偏向锁效率反而降低
+
+当一个对象已经计算过 hashCode，就再也无法进入偏向状态了
+
+添加 VM 参数 -XX:-UseBiasedLocking 禁用偏向锁
+
+撤销偏向锁的状态：
+
+调用对象的 hashCode：偏向锁的对象 MarkWord 中存储的是线程 id，调用 hashCode 导致偏向锁被撤销
+当有其它线程使用偏向锁对象时，会将偏向锁升级为轻量级锁
+调用 wait/notify，需要申请 Monitor，进入 WaitSet
+批量撤销：如果对象被多个线程访问，但没有竞争，这时偏向了线程 T1 的对象仍有机会重新偏向 T2，重偏向会重置对象的 Thread ID
+
+批量重偏向：当撤销偏向锁阈值超过 20 次后，JVM 会觉得是不是偏向错了，于是在给这些对象加锁时重新偏向至加锁线程
+
+批量撤销：当撤销偏向锁阈值超过 40 次后，JVM 会觉得自己确实偏向错了，根本就不该偏向，于是整个类的所有对象都会变为不可偏向的，新建的对象也是不可偏向的
+
+### 轻量级锁
+
+一个对象被多个线程进行加锁，但加锁的时间是错开的（没有竞争），可以使用轻量级锁实现，轻量级锁对使用者是透明的（不可见）
+
+可重入锁：线程可以进入任何一个它已经拥有的锁所同步的代码块，可重入锁最大的作用是避免死锁。
+
+轻量级锁在没有竞争时（锁重入时），每次重入仍然需要执行 CAS 操作，Java 6 才引入的偏向锁来优化
+
+_锁重入实例_
+
+```java
+static final Object obj = new Object();
+
+public static void method1(){
+    synchronized (obj){
+        //同步块A
+        method2();
+    }
+}
+
+public static void method2(){
+    synchronized (obj){
+        //同步块B
+    }
+}
+```
+
+创建锁记录对象，每个线程的栈帧都会包含一个锁记录的结构，存储锁定对象的Mark Word
+
+让锁记录中Object reference指向锁住的对象，并尝试用CAS替换Object的Mark Word，将Mark Word的值存入锁记录
+
+如果CAS替换成功。对象头中存储了锁记录地址和状态00（轻量级锁），表示线程给对象加锁
+
+如果CAS失败，有两种情况
+
+    如果是其他线程已经持有了该Object的轻量级锁，这时表明有竞争，进入锁膨胀过程
+    如果线程自己执行了synchronized锁重入，就添加一条Lock Record作为重入计数
+
+当退出synchronized代码块（解锁时）
+
+    如果有取值为null的锁记录，表示有重入，这时重置锁记录，表示重入计数减1
+    如果锁记录不为null，这时使用CAS将Mark Word的值恢复给对象头
+        成功，则解锁成功
+        失败，说明轻量级锁进行了锁膨胀或已经升级为重量级锁，进入重量级锁解锁流程
+
+### 锁膨胀
+
+在尝试加轻量级锁的过程中，CAS操作无法成功。可能是其他线程为此对象加上了轻量级锁（有竞争）。这时需要进行锁膨胀，轻量级锁
+变为重量级锁
+
+当Thread-1进行轻量级加锁时，Thread-0已经对该对象加了轻量级锁
+
+![alt](image/img.png)
+
+Thread-1加轻量级锁失败，进入锁膨胀流程：为Object对象申请Monitor锁。通过Object对象头获取到持锁线程。将Monitor的Owner
+设置为Thread-0。将Object的对象头指向重量级锁地址，然后自己进入Monitor的EntryList BLOCKED
+
+![alt](image/img_1.png)
+
+当线程Thread-0退出同步代码块解锁时，使用CAS将Mark Word的值恢复给对象头失败，这时进入重量级解锁流程，及按照Monitor地址找到
+Monitor对象。设置Owner为null。唤醒EntryList中BLOCKED线程。
+
+### 锁优化
+
+重量级锁竞争时，尝试获取锁的线程不会立即阻塞，可以使用自旋（默认10次）来进行优化。采用循环的方式尝试获取锁
+
+_注意_
+
+    自旋锁占用CPU时间，单核CPU自旋就是在浪费时间，因为同一时刻只能运行一个线程，多核CPU自旋才能发挥优势
+    自旋失败的线程进入阻塞状态
+
+优点：不会进入阻塞状态，减少线程上下文切换消耗
+缺点：当自旋的线程越来越多时，会不断消耗CPU资源
+
+_自旋锁情况_
+
+![alt](image/img_2.png)
+
+![alt](image/img_3.png)
+
+### 手写自旋锁---SpinLock.java
+
+### 锁消除
+
+锁消除是指对于被检测出不可能存在竞争的共享数据的锁进行消除，这是 JVM 即时编译器的优化
+
+锁消除主要是通过逃逸分析来支持，如果堆上的共享数据不可能逃逸出去被其它线程访问到，那么就可以把它们当成私有数据对待，也就可以将它们的锁进行消除（同步消除：JVM 逃逸分析）
+
+### 锁相化
+
+对相同对象多次加锁，导致线程发生多次重入，频繁的加锁操作就会导致性能消耗，可以使用锁相化方式优化
+
+如果虚拟机探测到一串的操作都对同一个对象加锁，将会把加锁的范围扩展到整个操作序列的外部
+
+一些看起来没有加锁的代码，其实隐式的加了很多锁
+
+```java
+public static String concatString(String s1, String s2, String s3) {
+    return s1 + s2 + s3;
+}
+```
+
+String 是一个不可变的类，编译器会对 String 的拼接自动优化。在 JDK 1.5 之前，转化为 StringBuffer 对象的连续 append() 操作，每个 append() 方法中都有一个同步块
+
+```java
+public static String concatString(String s1, String s2, String s3) {
+    StringBuffer sb = new StringBuffer();
+    sb.append(s1);
+    sb.append(s2);
+    sb.append(s3);
+    return sb.toString();
+}
+```
+
+扩展到第一个 append() 操作之前直至最后一个 append() 操作之后，只需要加锁一次就可以
+
+## 多把锁
+
+多把不想干的锁：例如一间房子中有两个功能，一个是睡觉，一个是学习，但是只有一间房间（一个对象锁）供使用，那么并发度很低。
+
+将锁的粒度细分：
+    
+    好处：可以增加并发度
+    坏处：如果一个线程需要同时获取多把锁，很容易发生死锁
+
+解决办法：准备多个对象锁
+
+```java
+public static void main(String[] args){
+    
+}
+class Room {  
+    private final Object sleepRoom = new Object();
+    private final Object studyRoom = new Object();
+    
+    public void sleep() throws Exception{
+        synchronized (sleepRoom){
+            System.out.println("sleep 2 小时");
+            Thread.sleep(2000);
+        }
+    }
+    
+    public void study() throws Exception{
+        synchronized (studyRoom){
+            System.out.println("study 1 小时");
+            Thread.sleep(1000);
+        }
+    }
+}
+```
+
+## 活跃性
+
+### 死锁---Dead.java
+
+死锁：多个线程同时被阻塞，它们中的一个或者全部都在等待某个资源被释放，由于线程被无限期地阻塞，因此程序不可能正常终止
+
+Java 死锁产生的四个必要条件：
+
+互斥条件，即当资源被一个线程使用（占有）时，别的线程不能使用
+
+不可剥夺条件，资源请求者不能强制从资源占有者手中夺取资源，资源只能由资源占有者主动释放
+
+请求和保持条件，即当资源请求者在请求其他的资源的同时保持对原有资源的占有
+
+循环等待条件，即存在一个等待循环队列：p1 要 p2 的资源，p2 要 p1 的资源，形成了一个等待环路
+
+四个条件都成立的时候，便形成死锁。死锁情况下打破上述任何一个条件，便可让死锁消失
+
+### `rgb(9, 105, 218) 定位---以Dead.java文件为例`
+
+使用 jps 定位进程 id，再用 jstack id 定位死锁，找到死锁的线程去查看源码，解决优化
+
+Linux 下可以通过 top 先定位到 CPU 占用高的 Java 进程，再利用 top -Hp 进程id 来定位是哪个线程，最后再用 jstack 的输出来看各个线程栈
+
+避免死锁：避免死锁要注意加锁顺序
+
+可以使用 jconsole 工具，在 jdk\bin 目录下
+
+### 活锁---TestLiveLock.java
+
+活锁：指的是任务或者执行者没有被阻塞，由于某些条件没有满足，导致一直重复尝试—失败—尝试—失败的过程
+
+两个线程互相改变对方的结束条件，最后谁也无法结束：
+
+### 饥饿
+
+饥饿：一个线程由于优先级太低，始终得不到 CPU 调度执行，也不能够结束
+
+# Wait-ify
+
+## 基本使用
+
+需要获取对象锁后才可以调用 锁对象.wait()，notify 随机唤醒一个线程，notifyAll 唤醒所有线程去竞争 CPU
+
+Object类API：
+
+```java
+public final void notify():唤醒正在等待对象监视器的单个线程。
+public final void notifyAll():唤醒正在等待对象监视器的所有线程。
+public final void wait():导致当前线程等待，直到另一个线程调用该对象的notify()方法或 notifyAll()方法。
+public final native void wait(long timeout):有时限的等待, 到n毫秒后结束等待，或是被唤醒
+```
+
+说明：wait 是挂起线程，需要唤醒的都是挂起操作，阻塞线程可以自己去争抢锁，挂起的线程需要唤醒后去争抢锁
+
+对比sleep()：
+
+    原理不同：sleep() 方法是属于 Thread 类，是线程用来控制自身流程的，使此线程暂停执行一段时间而把执行机会让给其他线程；wait() 方法属于 Object 类，用于线程间通信
+    对锁的处理机制不同：调用 sleep() 方法的过程中，线程不会释放对象锁，当调用 wait() 方法的时候，线程会放弃对象锁，进入等待此对象的等待锁定池（不释放锁其他线程怎么抢占到锁执行唤醒操作），但是都会释放 CPU
+    使用区域不同：wait() 方法必须放在**同步控制方法和同步代码块（先获取锁）**中使用，sleep() 方法则可以放在任何地方使用
+
+底层原理：
+
+    Owner 线程发现条件不满足，调用 wait 方法，即可进入 WaitSet 变为 WAITING 状态
+    BLOCKED 和 WAITING 的线程都处于阻塞状态，不占用 CPU 时间片
+    BLOCKED 线程会在 Owner 线程释放锁时唤醒
+    WAITING 线程会在 Owner 线程调用 notify 或 notifyAll 时唤醒，唤醒后并不意味者立刻获得锁，需要进入 EntryList 重新竞争
+
+![alt](image/img_6.png)
+
+## 代码优化
+
+虚假唤醒：notify 只能随机唤醒一个 WaitSet 中的线程，这时如果有其它线程也在等待，那么就可能唤醒不了正确的线程
+
+解决方法：采用 notifyAll
+
+notifyAll 仅解决某个线程的唤醒问题，使用 if + wait 判断仅有一次机会，一旦条件不成立，无法重新判断
+
+解决方法：用 while + wait，当条件不成立，再次 wait
+
+
+
+
 
