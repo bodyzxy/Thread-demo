@@ -235,7 +235,7 @@ _Java_
 
 # **同步**
 
-# synchronized---SynchronizedDemo.java
+# 同步--synchronized---SynchronizedDemo.java
 
 锁对象：理论上是任意的唯一对象
 
@@ -588,7 +588,7 @@ Linux 下可以通过 top 先定位到 CPU 占用高的 Java 进程，再利用 
 
 饥饿：一个线程由于优先级太低，始终得不到 CPU 调度执行，也不能够结束
 
-# Wait-ify
+# 同步--Wait-ify
 
 ## 基本使用
 
@@ -620,7 +620,7 @@ public final native void wait(long timeout):有时限的等待, 到n毫秒后结
 
 ![alt](image/img_6.png)
 
-## 代码优化
+## 代码优化---NotifyAllDemo.java
 
 虚假唤醒：notify 只能随机唤醒一个 WaitSet 中的线程，这时如果有其它线程也在等待，那么就可能唤醒不了正确的线程
 
@@ -630,7 +630,206 @@ notifyAll 仅解决某个线程的唤醒问题，使用 if + wait 判断仅有�
 
 解决方法：用 while + wait，当条件不成立，再次 wait
 
+# 同步--park-un
 
+LockSupport 是用来创建锁和其他同步类的线程原语
+
+LockSupport 类方法：
+
+LockSupport.park()：暂停当前线程，挂起原语
+
+LockSupport.unpark(暂停的线程对象)：恢复某个线程的运行
+
+```java
+public static void main(String[] args) {
+    Thread t1 = new Thread(() -> {
+        System.out.println("start...");	//1
+		Thread.sleep(1000);// Thread.sleep(3000)
+        // 先 park 再 unpark 和先 unpark 再 park 效果一样，都会直接恢复线程的运行
+        System.out.println("park...");	//2
+        LockSupport.park();
+        System.out.println("resume...");//4
+    },"t1");
+    t1.start();
+   	Thread.sleep(2000);
+    System.out.println("unpark...");	//3
+    LockSupport.unpark(t1);
+}
+```
+
+LockSupport 出现就是为了增强 wait & notify 的功能
+
+    wait，notify 和 notifyAll 必须配合 Object Monitor 一起使用，而 park、unpark 不需要
+    park & unpark 以线程为单位来阻塞和唤醒线程，而 notify 只能随机唤醒一个等待线程，notifyAll 是唤醒所有等待线程
+    park & unpark 可以先 unpark，而 wait & notify 不能先 notify。类比生产消费，先消费发现有产品就消费，没有就等待；先生产就直接产生商品，然后线程直接消费
+    wait 会释放锁资源进入等待队列，park 不会释放锁资源，只负责阻塞当前线程，会释放 CPU
+
+原理：类似生产者消费者:
+
+- 先park：
+  - 当前线程调用 Unsafe.park() 方法
+  - 检查 _counter ，本情况为 0，这时获得 _mutex 互斥锁
+  - 线程进入 _cond 条件变量挂起
+  - 调用 Unsafe.unpark(Thread_0) 方法，设置 _counter 为 1
+  - 唤醒 _cond 条件变量中的 Thread_0，Thread_0 恢复运行，设置 _counter 为 0
+
+![alt](image/img_7.png)
+
+- 先unpark:
+  - 调用 Unsafe.unpark(Thread_0) 方法，设置 _counter 为 1
+  - 当前线程调用 Unsafe.park() 方法
+  - 检查 _counter ，本情况为 1，这时线程无需挂起，继续运行，设置 _counter 为 0
+
+![alt](image/img_8.png)
+
+# 同步--安全分析
+
+成员变量和静态变量：
+  - 如果他们没有共享，则线程安全
+  - 如果它们被共享了，根据他们的状态是否改变，分两种情况：
+     - 如果只有读操作，线程安全
+     - 如果有读写操作，则这段代码是临界区，需要考虑线程安全的问题
+
+局部变量：
+  - 局部变量是线性安全的
+  - 局部变量引用的对象不一定线程安全（逃离分析）：
+     - 如果该对象没有逃离方法的作用访问，它是线程安全的（每一个方法有一个栈帧）
+     - 如果该对象逃离方法的作用范围，需要考虑线程安全问题（暴露引用）
+
+常见线程安全类：String、Integer、StringBuffer、Random、Vector、Hashtable、java.util.concurrent 包
+
+线程安全的是指，多个线程调用它们同一个实例的某个方法时，是线程安全的
+
+每个方法是原子的，但多个方法的组合不是原子的，只能保证调用的方法内部安全
+
+无状态类线程安全，就是没有成员变量的类
+
+不可变类线程安全：String、Integer 等都是不可变类，内部的状态不可以改变，所以方法是线程安全
+
+replace 等方法底层是新建一个对象，复制过去
+
+抽象方法如果有参数，被重写后行为不确定可能造成线程不安全，被称之为外星方法：`public abstract foo(Student s)`;
+
+# 同步--同步模式
+
+## 保护性暂停
+
+### 单任务版--GuardedObject.java
+
+Guarded Suspension，用在一个线程等待另一个线程的执行结果
+
+    有一个结果需要从一个线程传递到另一个线程，让它们关联同一个 GuardedObject
+    如果有结果不断从一个线程到另一个线程那么可以使用消息队列（见生产者/消费者）
+    JDK 中，join 的实现、Future 的实现，采用的就是此模式
+
+![alt](image/img_9.png)
+
+### 多任务版
+
+![alt](image/img_10.png)
+
+举例
+
+```java
+public static void main(String[] args) throws InterruptedException {
+    for (int i = 0; i < 3; i++) {
+        new People().start();
+    }
+    Thread.sleep(1000);
+    for (Integer id : Mailboxes.getIds()) {
+        new Postman(id, id + "号快递到了").start();
+    }
+}
+
+@Slf4j(topic = "c.People")
+class People extends Thread{
+    @Override
+    public void run() {
+        // 收信
+        GuardedObject guardedObject = Mailboxes.createGuardedObject();
+        log.debug("开始收信i d:{}", guardedObject.getId());
+        Object mail = guardedObject.get(5000);
+        log.debug("收到信id:{}，内容:{}", guardedObject.getId(),mail);
+    }
+}
+
+class Postman extends Thread{
+    private int id;
+    private String mail;
+    //构造方法
+    @Override
+    public void run() {
+        GuardedObject guardedObject = Mailboxes.getGuardedObject(id);
+        log.debug("开始送信i d:{}，内容:{}", guardedObject.getId(),mail);
+        guardedObject.complete(mail);
+    }
+}
+
+class  Mailboxes {
+    private static Map<Integer, GuardedObject> boxes = new Hashtable<>();
+    private static int id = 1;
+
+    //产生唯一的id
+    private static synchronized int generateId() {
+        return id++;
+    }
+
+    public static GuardedObject getGuardedObject(int id) {
+        return boxes.remove(id);
+    }
+
+    public static GuardedObject createGuardedObject() {
+        GuardedObject go = new GuardedObject(generateId());
+        boxes.put(go.getId(), go);
+        return go;
+    }
+
+    public static Set<Integer> getIds() {
+        return boxes.keySet();
+    }
+}
+class GuardedObject {
+    //标识，Guarded Object
+    private int id;//添加get set方法
+}
+```
+
+## 顺序输出--OrderDemo.java
+
+## 交替输出--AlternateDemo.java
+
+_实例代码中解释_
+
+	Condition 是与 ReentrantLock 一起使用的辅助类，用来实现更复杂的线程间协调，例如线程的等待和通知。每个 Condition 都绑定在一个 ReentrantLock 对象上。
+
+当一个线程在 AwaitSignal.print 方法中调用 condition.await() 时，线程会释放它持有的锁并进入等待状态（await()）。
+然而，当它被 signal() 唤醒时，它必须重新获得这个锁才能继续执行。
+因此，只有持有锁的线程可以调用 signal() 或 signalAll() 来通知等待在这个条件变量上的其他线程。
+
+```angular2html
+在创建完三个线程a，b，c后线程会沉睡1秒，在这一秒内大家都想执行print
+但是，因为condition.await()处于阻塞没有一个线程被唤醒，所以大家都
+不能执行，只有当我们在后面对某个线程进行唤醒后，才从某一线程开始执行
+
+注意：
+使用signal()前，线程必须上锁才可以执行。
+```
+
+# 同步--异步模式
+
+## 传统版--TraditionalProducerConsumer.java
+
+## 改进版
+
+消费队列可以用来平衡生产和消费的线程资源，不需要产生结果和消费结果的线程一一对应
+
+生产者仅负责产生结果数据，不关心数据该如何处理，而消费者专心处理结果数据
+
+消息队列是有容量限制的，满时不会再加入数据，空时不会再消耗数据
+
+JDK 中各种阻塞队列，采用的就是这种模式
+
+![alt](image/img_11.png)
 
 
 

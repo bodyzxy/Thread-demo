@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="" />
+    <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/image/img_10.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_11.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_9.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/Message.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/ShareData.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/AlternateDemo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/GuardedObject.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/OrderDemo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/TraditionalProducerConsumer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UpdateTraditionalProducerConsumer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Thread-demo.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/Thread-demo.iml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -30,6 +47,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Application.AlternateDemo.executor": "Run",
     "Application.CallableDemo (1).executor": "Run",
     "Application.CallableDemo.executor": "Run",
     "Application.CompletableFutureApi2Demo.executor": "Run",
@@ -40,19 +58,23 @@
     "Application.Dead.executor": "Run",
     "Application.FutureApiDemo.executor": "Run",
     "Application.GetPriceDemo.executor": "Run",
+    "Application.GuardedObject.executor": "Debug",
     "Application.InterruptDemo.executor": "Run",
     "Application.LockSupportDemo.executor": "Run",
     "Application.NotifyAllDemo.executor": "Run",
+    "Application.OrderDemo.executor": "Debug",
     "Application.SpinLock.executor": "Run",
     "Application.SynchronizedDemo.executor": "Run",
     "Application.TestLiveLock.executor": "Run",
+    "Application.TraditionalProducerConsumer.executor": "Run",
     "Application.TwoPhaseTerminationDemo.executor": "Debug",
+    "Application.UpdateTraditionalProducerConsumer.executor": "Run",
     "Downloaded.Files.Path.Enabled": "false",
     "Repository.Attach.Annotations": "false",
     "Repository.Attach.JavaDocs": "false",
     "Repository.Attach.Sources": "false",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/zxy/AllProject/java/Thread-demo/out/production/Thread-demo/src",
     "node.js.detected.package.eslint": "true",
@@ -60,7 +82,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Problems",
+    "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.17126437",
     "settings.editor.selected.configurable": "http.proxy",
@@ -73,9 +95,9 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.NotifyAllDemo">
-    <configuration name="CallableDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.CallableDemo" />
+  <component name="RunManager" selected="Application.UpdateTraditionalProducerConsumer">
+    <configuration name="AlternateDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.AlternateDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -87,8 +109,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Dead" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.Dead" />
+    <configuration name="GuardedObject" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.GuardedObject" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -100,8 +122,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="NotifyAllDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.NotifyAllDemo" />
+    <configuration name="OrderDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.OrderDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -113,8 +135,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SpinLock" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.SpinLock" />
+    <configuration name="TraditionalProducerConsumer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.TraditionalProducerConsumer" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -126,8 +148,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TestLiveLock" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.TestLiveLock" />
+    <configuration name="UpdateTraditionalProducerConsumer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.UpdateTraditionalProducerConsumer" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -141,11 +163,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.NotifyAllDemo" />
-        <item itemvalue="Application.TestLiveLock" />
-        <item itemvalue="Application.Dead" />
-        <item itemvalue="Application.SpinLock" />
-        <item itemvalue="Application.CallableDemo" />
+        <item itemvalue="Application.UpdateTraditionalProducerConsumer" />
+        <item itemvalue="Application.TraditionalProducerConsumer" />
+        <item itemvalue="Application.AlternateDemo" />
+        <item itemvalue="Application.OrderDemo" />
+        <item itemvalue="Application.GuardedObject" />
       </list>
     </recent_temporary>
   </component>
@@ -177,7 +199,11 @@
       <workItem from="1723255930653" duration="19000" />
       <workItem from="1723255972303" duration="397000" />
       <workItem from="1723256388724" duration="51000" />
-      <workItem from="1723256465808" duration="9309000" />
+      <workItem from="1723256465808" duration="9763000" />
+      <workItem from="1723268228623" duration="1356000" />
+      <workItem from="1723345737402" duration="502000" />
+      <workItem from="1723347102674" duration="1023000" />
+      <workItem from="1723376468050" duration="10424000" />
     </task>
     <servers />
   </component>
