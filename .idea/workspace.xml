@@ -5,22 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/image/img_10.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_11.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/img_9.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model/Message.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model/ShareData.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/AlternateDemo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/GuardedObject.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/OrderDemo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/TraditionalProducerConsumer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/UpdateTraditionalProducerConsumer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_12.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_13.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_14.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_15.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_16.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_17.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_18.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Thread-demo.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/Thread-demo.iml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,50 +38,50 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.AlternateDemo.executor": "Run",
-    "Application.CallableDemo (1).executor": "Run",
-    "Application.CallableDemo.executor": "Run",
-    "Application.CompletableFutureApi2Demo.executor": "Run",
-    "Application.CompletableFutureApi3Demo.executor": "Run",
-    "Application.CompletableFutureApiDemo.executor": "Run",
-    "Application.CompletableFutureDemo.executor": "Run",
-    "Application.CompletableFutureResult.executor": "Run",
-    "Application.Dead.executor": "Run",
-    "Application.FutureApiDemo.executor": "Run",
-    "Application.GetPriceDemo.executor": "Run",
-    "Application.GuardedObject.executor": "Debug",
-    "Application.InterruptDemo.executor": "Run",
-    "Application.LockSupportDemo.executor": "Run",
-    "Application.NotifyAllDemo.executor": "Run",
-    "Application.OrderDemo.executor": "Debug",
-    "Application.SpinLock.executor": "Run",
-    "Application.SynchronizedDemo.executor": "Run",
-    "Application.TestLiveLock.executor": "Run",
-    "Application.TraditionalProducerConsumer.executor": "Run",
-    "Application.TwoPhaseTerminationDemo.executor": "Debug",
-    "Application.UpdateTraditionalProducerConsumer.executor": "Run",
-    "Downloaded.Files.Path.Enabled": "false",
-    "Repository.Attach.Annotations": "false",
-    "Repository.Attach.JavaDocs": "false",
-    "Repository.Attach.Sources": "false",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/zxy/AllProject/java/Thread-demo/out/production/Thread-demo/src",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.17126437",
-    "settings.editor.selected.configurable": "http.proxy",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.AlternateDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.CallableDemo (1).executor&quot;: &quot;Run&quot;,
+    &quot;Application.CallableDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.CompletableFutureApi2Demo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.CompletableFutureApi3Demo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.CompletableFutureApiDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.CompletableFutureDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.CompletableFutureResult.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Dead.executor&quot;: &quot;Run&quot;,
+    &quot;Application.FutureApiDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.GetPriceDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.GuardedObject.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.InterruptDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.LockSupportDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.NotifyAllDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.OrderDemo.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.SpinLock.executor&quot;: &quot;Run&quot;,
+    &quot;Application.SynchronizedDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.TestLiveLock.executor&quot;: &quot;Run&quot;,
+    &quot;Application.TraditionalProducerConsumer.executor&quot;: &quot;Run&quot;,
+    &quot;Application.TwoPhaseTerminationDemo.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.UpdateTraditionalProducerConsumer.executor&quot;: &quot;Run&quot;,
+    &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
+    &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/zxy/AllProject/java/Thread-demo/out/production/Thread-demo/src&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.17126437&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;http.proxy&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/out/production/Thread-demo/src" />
@@ -203,7 +196,8 @@
       <workItem from="1723268228623" duration="1356000" />
       <workItem from="1723345737402" duration="502000" />
       <workItem from="1723347102674" duration="1023000" />
-      <workItem from="1723376468050" duration="10424000" />
+      <workItem from="1723376468050" duration="10886000" />
+      <workItem from="1723613667194" duration="8463000" />
     </task>
     <servers />
   </component>
