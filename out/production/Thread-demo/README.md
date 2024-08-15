@@ -819,7 +819,7 @@ _实例代码中解释_
 
 ## 传统版--TraditionalProducerConsumer.java
 
-## 改进版
+## 改进版--UpdateTraditionalProducerConsumer.java
 
 消费队列可以用来平衡生产和消费的线程资源，不需要产生结果和消费结果的线程一一对应
 
@@ -830,6 +830,792 @@ _实例代码中解释_
 JDK 中各种阻塞队列，采用的就是这种模式
 
 ![alt](image/img_11.png)
+
+## 阻塞队列
+
+```java
+public static void main(String[] args) {
+    ExecutorService consumer = Executors.newFixedThreadPool(1);
+    ExecutorService producer = Executors.newFixedThreadPool(1);
+    BlockingQueue<Integer> queue = new SynchronousQueue<>();
+    producer.submit(() -> {
+        try {
+            System.out.println("生产...");
+            Thread.sleep(1000);
+            queue.put(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    });
+    consumer.submit(() -> {
+        try {
+            System.out.println("等待消费...");
+            Integer result = queue.take();
+            System.out.println("结果为:" + result);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    });
+}
+```
+
+# 内存
+
+## JMM
+
+### 内存模型
+
+java的内存模型JMM，本身是一种`抽象的概念`，实际上并不存在，描述的是一组规则或规范，通过这组规范定义了程序中的各个变量
+的访问方式。
+
+_JMM作用_
+  - 屏蔽各种硬件和操作系统的内存访问差异，实现让java程序在各种平台下都能达到一致的内存访问效果
+  - 规定了线程和内存之间的一些关系
+
+根据JMM设计。系统存在一个主内存。Java中所有变量都存储在主内存中，对所有的线程都是共享的：每条线程都有自己的共享内存。
+工作内存中保存的是主内存中的某些`变量拷贝`，线程对所有变量的操作都是先对变量进行拷贝。然后在工作内存中进行。不能直接操作
+主内存中的变量；线程之间无法相互直接访问。线程间通信必须通过主内存来完成。
+
+![alt](image/img_12.png)
+
+主内存和工作内存：
+
+主内存：计算机的内存，也就是经常提到的 8G 内存，16G 内存，存储所有共享变量的值
+
+工作内存：存储该线程使用到的共享变量在主内存的的值的副本拷贝
+
+JVM 和 JMM 之间的关系：JMM 中的主内存、工作内存与 JVM 中的 Java 堆、栈、方法区等并不是同一个层次的内存划分，这两者基本上是没有关系的，如果两者一定要勉强对应起来：
+
+主内存主要对应于 Java 堆中的对象实例数据部分，而工作内存则对应于虚拟机栈中的部分区域
+
+从更低层次上说，主内存直接对应于物理硬件的内存，工作内存对应寄存器和高速缓存
+
+### 内存交互
+
+Java内存模型定义了8个操作来完成主内存和工作内存的交互操作，那个操作都是原子的
+
+非原子协议=定：没有被volatile修饰的long，double外，默认按照两次32位操作
+
+![alt](image/img_13.png)
+
+- lock：作用于主内存，将一个变量标识为被一个线程独占状态（对应monitorenter）
+- unlock：作用于主内存，讲一个变量从独占状态释放出来，释放后变量才可以被其他线程锁定（对应monitorexit）
+- read：作用于主内存，把一个变量值从主内存传输到动作内存中
+- load：作用于工作内存，在read之后执行，把read得到的值放入工作内存的变量副本中
+- use：作用于工作内存，把工作内存中的一个变量值传递给`执行引擎`，每当遇到s一个使用到变量的操作时都要使用该命令
+- assign：作用于工作内存，把从执行引擎接收到的一个值赋给工作内存的变量
+- store：作用于工作内存，把工作内存的一个变量的值传送到主内存中
+- write：作用于主内存，在store之后执行，把store得到的值放入主内存的变量中
+
+### 三大特征
+
+_可见性_
+
+可见性：是指多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看到修改的值
+
+存在不可见问题的根本原因是由于缓存的存在，线程持有的是共享变量副本，无法感知其他线程对于共享变量的更改。导致读取的值不是最新的。但是final修饰的变量是不可变的。就算
+有缓存，也不会存在不可见的问题。
+
+main线程对run变量的修改对于t线程不可见，导致t线程无法停止
+
+```java
+static boolean run = true;	//添加volatile
+public static void main(String[] args) throws InterruptedException {
+    Thread t = new Thread(()->{
+        while(run){
+        // ....
+        }
+	});
+    t.start();
+    sleep(1);
+    run = false; // 线程t不会如预想的停下来
+}
+```
+
+原因：
+
+- 初始状态， t 线程刚开始从主内存读取了 run 的值到工作内存
+- 因为 t 线程要频繁从主内存中读取 run 的值，JIT 编译器会将 run 的值缓存至自己工作内存中的高速缓存中，减少对主存中 run 的访问，提高效率
+- 1 秒之后，main 线程修改了 run 的值，并同步至主存，而 t 是从自己工作内存中的高速缓存中读取这个变量的值，结果永远是旧值
+
+![alt](image/img_14.png)
+
+_原子性_
+
+原子性：不可分割，完整性，也就是说某个线程正在做某个具体业务时，中间不可以被分割，需要具体完成，要么同时成功，要么同时失败，保证指令不会受到线程上下文切换的影响
+
+定义原子操作的使用规则：
+
+1. 不允许 read 和 load、store 和 write 操作之一单独出现，必须顺序执行，但是不要求连续
+2. 不允许一个线程丢弃 assign 操作，必须同步回主存
+3. 不允许一个线程无原因地（没有发生过任何 assign 操作）把数据从工作内存同步会主内存中
+4. 一个新的变量只能在主内存中诞生，不允许在工作内存中直接使用一个未被初始化（assign 或者 load）的变量，即对一个变量实施 use 和 store 操作之前，必须先自行 assign 和 load 操作
+5. 一个变量在同一时刻只允许一条线程对其进行 lock 操作，但 lock 操作可以被同一线程重复执行多次，多次执行 lock 后，只有执行相同次数的 unlock 操作，变量才会被解锁，lock 和 unlock 必须成对出现
+6. 如果对一个变量执行 lock 操作，将会清空工作内存中此变量的值，在执行引擎使用这个变量之前需要重新从主存加载
+7. 如果一个变量事先没有被 lock 操作锁定，则不允许执行 unlock 操作，也不允许去 unlock 一个被其他线程锁定的变量
+8. 对一个变量执行 unlock 操作之前，必须先把此变量同步到主内存中（执行 store 和 write 操作）
+
+_有序性_
+
+有序性：在本线程内观察，所有操作都是有序的；在一个线程观察另一个线程，所有操作都是无序的，无序是因为发生了指令重排序
+
+CPU 的基本工作是执行存储的指令序列，即程序，程序的执行过程实际上是不断地取出指令、分析指令、执行指令的过程，为了提高性能，编译器和处理器会对指令重排，一般分为以下三种：
+
+```java
+源代码 -> 编译器优化的重排 -> 指令并行的重排 -> 内存系统的重排 -> 最终执行指令
+```
+
+现代 CPU 支持多级指令流水线，几乎所有的冯•诺伊曼型计算机的 CPU，其工作都可以分为 5 个阶段：取指令、指令译码、执行指令、访存取数和结果写回，可以称之为五级指令流水线。CPU 可以在一个时钟周期内，同时运行五条指令的不同阶段（每个线程不同的阶段），本质上流水线技术并不能缩短单条指令的执行时间，但变相地提高了指令地吞吐率
+
+处理器在进行重排序时，必须要考虑指令之间的数据依赖性
+
+- 单线程环境也存在指令重排，由于存在依赖性，最终执行结果和代码顺序的结果一致
+- 多线程环境中线程交替执行，由于编译器优化重排，会获取其他线程处在不同阶段的指令同时执行
+
+补充知识：
+
+- 指令周期是取出一条指令并执行这条指令的时间，一般由若干个机器周期组成
+- 机器周期也称为 CPU 周期，一条指令的执行过程划分为若干个阶段（如取指、译码、执行等），每一阶段完成一个基本操作，完成一个基本操作所需要的时间称为机器周期
+- 振荡周期指周期性信号作周期性重复变化的时间间隔
+
+## cache
+
+### 缓存机制
+
+_缓冲结构_
+
+在计算机系统中，CPU 高速缓存（CPU Cache，简称缓存）是用于减少处理器访问内存所需平均时间的部件；在存储体系中位于自顶向下的第二层，仅次于 CPU 寄存器；其容量远小于内存，但速度却可以接近处理器的频率
+
+CPU 处理器速度远远大于在主内存中的，为了解决速度差异，在它们之间架设了多级缓存，如 L1、L2、L3 级别的缓存，这些缓存离 CPU 越近就越快，将频繁操作的数据缓存到这里，加快访问速度
+
+![alt](image/img_15.png)
+
+_缓存的使用_
+
+当处理器发出内存访问请求时，会先查看缓存内是否有请求数据，如果存在（命中），则不用访问内存直接返回该数据；如果不存在（失效），则要先把内存中的相应数据载入缓存，再将其返回处理器
+
+缓存之所以有效，主要因为程序运行时对内存的访问呈现局部性（Locality）特征。既包括空间局部性（Spatial Locality），也包括时间局部性（Temporal Locality），有效利用这种局部性，缓存可以达到极高的命中率
+
+### 伪共享
+
+缓存以缓存行 cache line 为单位，每个缓存行对应着一块内存，一般是 64 byte（8 个 long），在 CPU 从主存获取数据时，以 cache line 为单位加载，于是相邻的数据会一并加载到缓存中
+
+缓存会造成数据副本的产生，即同一份数据会缓存在不同核心的缓存行中，CPU 要保证数据的一致性，需要做到某个 CPU 核心更改了数据，其它 CPU 核心对应的整个缓存行必须失效，这就是伪共享
+
+![alt](image/img_16.png)
+
+解决方法：
+
+- padding：通过填充，让数据落在不同的 cache line 中
+
+- @Contended：原理参考 无锁 → Adder → 优化机制 → 伪共享
+
+### 缓存一致
+
+缓存一致性：当多个处理器运算任务都涉及到同一块主内存区域的时候，将可能导致各自的缓存数据不一样
+
+MESI（Modified Exclusive Shared Or Invalid）是一种广泛使用的支持写回策略的缓存一致性协议，CPU 中每个缓存行（caceh line）使用 4 种状态进行标记（使用额外的两位 bit 表示)：
+
+- M：被修改（Modified）
+
+    该缓存行只被缓存在该 CPU 的缓存中，并且是被修改过的，与主存中的数据不一致 (dirty)，该缓存行中的内存需要写回 (write back) 主存。该状态的数据再次被修改不会发送广播，因为其他核心的数据已经在第一次修改时失效一次
+    
+    当被写回主存之后，该缓存行的状态会变成独享 (exclusive) 状态
+
+- E：独享的（Exclusive）
+
+    该缓存行只被缓存在该 CPU 的缓存中，是未被修改过的 (clear)，与主存中数据一致，修改数据不需要通知其他 CPU 核心，该状态可以在任何时刻有其它 CPU 读取该内存时变成共享状态 (shared)
+    
+    当 CPU 修改该缓存行中内容时，该状态可以变成 Modified 状态
+
+- S：共享的（Shared）
+
+    该状态意味着该缓存行可能被多个 CPU 缓存，并且各个缓存中的数据与主存数据一致，当 CPU 修改该缓存行中，会向其它 CPU 核心广播一个请求，使该缓存行变成无效状态 (Invalid)，然后再更新当前 Cache 里的数据
+
+- I：无效的（Invalid）
+
+    该缓存是无效的，可能有其它 CPU 修改了该缓存行
+    
+解决方法：各个处理器访问缓存时都遵循一些协议，在读写时要根据协议进行操作，协议主要有 MSI、MESI 等
+
+### 处理机制
+
+单核 CPU 处理器会自动保证基本内存操作的原子性
+
+多核 CPU 处理器，每个 CPU 处理器内维护了一块内存，每个内核内部维护着一块缓存，当多线程并发读写时，就会出现缓存数据不一致的情况。处理器提供：
+
+- 总线锁定：当处理器要操作共享变量时，在 BUS 总线上发出一个 LOCK 信号，其他处理器就无法操作这个共享变量，该操作会导致大量阻塞，从而增加系统的性能开销（平台级别的加锁）
+- 缓存锁定：当处理器对缓存中的共享变量进行了操作，其他处理器有嗅探机制，将各自缓存中的该共享变量的失效，读取时会重新从主内存中读取最新的数据，基于 MESI 缓存一致性协议来实现
+
+有如下两种情况处理器不会使用缓存锁定：
+
+- 当操作的数据跨多个缓存行，或没被缓存在处理器内部，则处理器会使用总线锁定
+
+- 有些处理器不支持缓存锁定，比如：Intel 486 和 Pentium 处理器也会调用总线锁定
+
+总线机制：
+
+- 总线嗅探：每个处理器通过嗅探在总线上传播的数据来检查自己缓存值是否过期了，当处理器发现自己的缓存对应的内存地址的数据被修改，就将当前处理器的缓存行设置为无效状态，当处理器对这个数据进行操作时，会重新从内存中把数据读取到处理器缓存中
+
+- 总线风暴：当某个 CPU 核心更新了 Cache 中的数据，要把该事件广播通知到其他核心（写传播），CPU 需要每时每刻监听总线上的一切活动，但是不管别的核心的 Cache 是否缓存相同的数据，都需要发出一个广播事件，不断的从主内存嗅探和 CAS 循环，无效的交互会导致总线带宽达到峰值；因此不要大量使用 volatile 关键字，使用 volatile、syschonized 都需要根据实际场景
+
+## volatile
+
+### 同步机制
+
+volatile是Java虚拟机提供的轻量级的同步机制（三大特征）
+  - 保证可见性
+  - 不保证原子性
+  - 保证有序性（禁止指令重排）
+
+性能： volatile修饰的变量进行读操作与普通变量几乎没什么差异。但是写操作相对慢一些。因为需要在本地内存中插入很多
+内存屏障来保证指令不会发生乱序执行。但是开销比锁要小。
+
+synchronized无法禁止指令重排和处理器优化，为什么可以保证有序性可见性
+  - 加了锁之后，只能有一个线程获得到了锁，获得不到锁的线程就要阻塞，所以同一时间只有一个线程执行，相当于单线程，由于数据依赖性的存在，单线程的指令重排是没有问题的
+  - 线程加锁前，将清空工作内存中共享变量的值，使用共享变量时需要从主内存中重新读取最新的值；线程解锁前，必须把共享变量的最新值刷新到主内存中（JMM 内存交互章节有讲）
+
+### 指令重排
+
+volatile修饰的变量，可以禁用指令重排
+
+指令重排实例1:
+
+```java
+public void mySort() {
+	int x = 11;	//语句1
+	int y = 12;	//语句2  谁先执行效果一样
+	x = x + 5;	//语句3
+	y = x * x;	//语句4
+}
+```
+
+执行顺序是：1 2 3 4、2 1 3 4、1 3 2 4
+
+指令重排也有限制不会出现：4321，语句 4 需要依赖于 y 以及 x 的申明，因为存在数据依赖，无法首先执行
+
+实例2:
+
+```java
+int num = 0;
+boolean ready = false;
+// 线程1 执行此方法
+public void actor1(I_Result r) {
+    if(ready) {
+    	r.r1 = num + num;
+    } else {
+    	r.r1 = 1;
+    }
+}
+// 线程2 执行此方法
+public void actor2(I_Result r) {
+	num = 2;
+	ready = true;
+}
+```
+
+情况一：线程 1 先执行，ready = false，结果为 r.r1 = 1
+
+情况二：线程 2 先执行 num = 2，但还没执行 ready = true，线程 1 执行，结果为 r.r1 = 1
+
+情况三：线程 2 先执行 ready = true，线程 1 执行，进入 if 分支结果为 r.r1 = 4
+
+情况四：线程 2 执行 ready = true，切换到线程 1，进入 if 分支为 r.r1 = 0，再切回线程 2 执行 num = 2，发生指令重排
+
+### 底层原理
+
+_缓存一致_
+
+使用 volatile 修饰的共享变量，总线会开启 CPU 总线嗅探机制来解决 JMM 缓存一致性问题，也就是共享变量在多线程中可见性的问题，实现 MESI 缓存一致性协议
+
+底层是通过汇编 lock 前缀指令，共享变量加了 lock 前缀指令就会进行缓存锁定，在线程修改完共享变量后写回主存，其他的 CPU 核心上运行的线程根据总线嗅探机制会修改其共享变量为失效状态，读取时会重新从主内存中读取最新的数据
+
+lock 前缀指令就相当于内存屏障，Memory Barrier（Memory Fence）
+
+  - 对 volatile 变量的写指令后会加入写屏障
+  - 对 volatile 变量的读指令前会加入读屏障
+  - 
+内存屏障有三个作用：
+
+  - 确保对内存的读-改-写操作原子执行
+  - 阻止屏障两侧的指令重排序
+  - 强制把缓存中的脏数据写回主内存，让缓存行中相应的数据失效
+
+_内存屏障_
+
+保证可见性：
+    
+  - 写屏障（sfence，Store Barrier）保证在该屏障之前的，对共享变量的改动，都同步到主存当中
+
+```java
+public void actor2(I_Result r) {
+    num = 2;
+    ready = true; // ready 是 volatile 赋值带写屏障
+    // 写屏障
+}
+```
+
+  - 读屏障（lfence，Load Barrier）保证在该屏障之后的，对共享变量的读取，从主存刷新变量值，加载的是主存中最新数据
+
+```java
+public void actor1(I_Result r) {
+    // 读屏障
+    // ready 是 volatile 读取值带读屏障
+    if(ready) {
+    	r.r1 = num + num;
+    } else {
+    	r.r1 = 1;
+    }
+}
+```
+
+![alt](image/img_17.png)
+
+  - 全能屏障：mfence（modify/mix Barrier），兼具 sfence 和 lfence 的功能
+
+_保证有序性_
+
+  - 写屏障会确保指令重排序时，不会将写屏障之前的代码排在写屏障之后
+  - 读屏障会确保指令重排序时，不会将读屏障之后的代码排在读屏障之前
+
+不能解决指令交错
+  - 写屏障仅仅是保证之后的读能够读到最新的结果，但不能保证其他线程的读跑到写屏障之前
+  - 有序性的保证也只是保证了本线程内相关代码不被重排序
+
+```java
+volatile i = 0;
+new Thread(() -> {i++});
+new Thread(() -> {i--});
+```
+
+i++ 反编译后的指令：
+
+```java
+0: iconst_1			// 当int取值 -1~5 时，JVM采用iconst指令将常量压入栈中
+1: istore_1			// 将操作数栈顶数据弹出，存入局部变量表的 slot 1
+2: iinc		1, 1
+```
+
+![alt](image/img_18.png)
+
+_交互规则_
+
+对于 volatile 修饰的变量：
+  - 线程对变量的 use 与 load、read 操作是相关联的，所以变量使用前必须先从主存加载
+  - 线程对变量的 assign 与 store、write 操作是相关联的，所以变量使用后必须同步至主存
+  - 线程 1 和线程 2 谁先对变量执行 read 操作，就会先进行 write 操作，防止指令重排
+
+### 双端检锁
+
+_检锁机制_
+
+Double-Checked Locking:双端检锁机制
+
+DCL（双端检锁）机制不一定是线程安全，原因是指令重排的存在，加入volatile就可以禁止指令重排
+
+```java
+public final class Singleton {
+    private Singleton() { }
+    private static Singleton INSTANCE = null;
+    
+    public static Singleton getInstance() {
+        if(INSTANCE == null) { // t2，这里的判断不是线程安全的
+            // 首次访问会同步，而之后的使用没有 synchronized
+            synchronized(Singleton.class) {
+                // 这里是线程安全的判断，防止其他线程在当前线程等待锁的期间完成了初始化
+                if (INSTANCE == null) { 
+                    INSTANCE = new Singleton();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+}
+```
+
+不锁 INSTANCE 的原因：
+
+  - INSTANCE 要重新赋值
+  - INSTANCE 是 null，线程加锁之前需要获取对象的引用，设置对象头，null 没有引用
+
+实现特点：
+
+- 懒惰初始化
+- 首次使用 getInstance() 才使用 synchronized 加锁，后续使用时无需加锁
+- 第一个 if 使用了 INSTANCE 变量，是在同步块之外，但在多线程环境下会产生问题
+
+_DCL问题_
+
+getInstance 方法对应的字节码为：
+
+```angular2html
+0: 	getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+3: 	ifnonnull 		37
+6: 	ldc 			#3 		// class test/Singleton
+8: 	dup
+9: 	astore_0
+10: monitorenter
+11: getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+14: ifnonnull 27
+17: new 			#3 		// class test/Singleton
+20: dup
+21: invokespecial 	#4 		// Method "<init>":()V
+24: putstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+27: aload_0
+28: monitorexit
+29: goto 37
+32: astore_1
+33: aload_0
+34: monitorexit
+35: aload_1
+36: athrow
+37: getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+40: areturn
+```
+
+- 17 表示创建对象，将对象引用入栈
+- 20 表示复制一份对象引用，引用地址
+- 21 表示利用一个对象引用，调用构造方法初始化对象
+- 24 表示利用一个对象引用，赋值给 static INSTANCE
+
+步骤 21 和 24 之间不存在数据依赖关系，而且无论重排前后，程序的执行结果在单线程中并没有改变，因此这种重排优化是允许的
+
+- 关键在于 0:getstatic 这行代码在 monitor 控制之外，可以越过 monitor 读取 INSTANCE 变量的值
+- 当其他线程访问 INSTANCE 不为 null 时，由于 INSTANCE 实例未必已初始化，那么 t2 拿到的是将是一个未初始化完毕的单例返回，这就造成了线程安全的问题
+
+![alt](image/img_19.png)
+
+解决办法：
+
+指令重排只会保证串行语义的执行一致性（单线程），但并不会关系多线程间的语义一致性
+
+引入 volatile，来保证出现指令重排的问题，从而保证单例模式的线程安全性：
+
+```java
+private static volatile SingletonDemo INSTANCE = null;
+```
+
+## ha-be
+
+happens-before 先行发生
+
+ava 内存模型具备一些先天的“有序性”，即不需要通过任何同步手段（volatile、synchronized 等）就能够得到保证的安全，这个通常也称为 happens-before 原则，它是可见性与有序性的一套规则总结
+
+不符合 happens-before 规则，JMM 并不能保证一个线程的可见性和有序性
+
+1. 程序次序规则 (Program Order Rule)：一个线程内，逻辑上书写在前面的操作先行发生于书写在后面的操作 ，因为多个操作之间有先后依赖关系，则不允许对这些操作进行重排序
+
+2. 锁定规则 (Monitor Lock Rule)：一个 unlock 操作先行发生于后面（时间的先后）对同一个锁的 lock 操作，所以线程解锁 m 之前对变量的写（解锁前会刷新到主内存中），对于接下来对 m 加锁的其它线程对该变量的读可见
+
+3. volatile 变量规则 (Volatile Variable Rule)：对 volatile 变量的写操作先行发生于后面对这个变量的读
+
+4. 传递规则 (Transitivity)：具有传递性，如果操作 A 先行发生于操作 B，而操作 B 又先行发生于操作 C，则可以得出操作 A 先行发生于操作 C
+
+5. 线程启动规则 (Thread Start Rule)：Thread 对象的 start()方 法先行发生于此线程中的每一个操作
+
+6. 线程中断规则 (Thread Interruption Rule)：对线程 interrupt() 方法的调用先行发生于被中断线程的代码检测到中断事件的发生
+
+7. 线程终止规则 (Thread Termination Rule)：线程中所有的操作都先行发生于线程的终止检测，可以通过 Thread.join() 方法结束、Thread.isAlive() 的返回值手段检测到线程已经终止执行
+
+8. 对象终结规则（Finaizer Rule）：一个对象的初始化完成（构造函数执行结束）先行发生于它的 finalize() 方法的开始
+
+## 设计模式
+
+### 终止模式
+
+终止模式之两阶段终止模式：停止标记用 volatile 是为了保证该变量在多个线程之间的可见性
+
+```java
+class TwoPhaseTermination {
+    // 监控线程
+    private Thread monitor;
+    // 停止标记
+    private volatile boolean stop = false;;
+
+    // 启动监控线程
+    public void start() {
+        monitor = new Thread(() -> {
+            while (true) {
+                Thread thread = Thread.currentThread();
+                if (stop) {
+                    System.out.println("后置处理");
+                    break;
+                }
+                try {
+                    Thread.sleep(1000);// 睡眠
+                    System.out.println(thread.getName() + "执行监控记录");
+                } catch (InterruptedException e) {
+                   	System.out.println("被打断，退出睡眠");
+                }
+            }
+        });
+        monitor.start();
+    }
+
+    // 停止监控线程
+    public void stop() {
+        stop = true;
+        monitor.interrupt();// 让线程尽快退出Timed Waiting
+    }
+}
+// 测试
+public static void main(String[] args) throws InterruptedException {
+    TwoPhaseTermination tpt = new TwoPhaseTermination();
+    tpt.start();
+    Thread.sleep(3500);
+    System.out.println("停止监控");
+    tpt.stop();
+}
+```
+
+### Balking
+
+Balking （犹豫）模式用在一个线程发现另一个线程或本线程已经做了某一件相同的事，那么本线程就无需再做了，直接结束返回
+
+```java
+public class MonitorService {
+    // 用来表示是否已经有线程已经在执行启动了
+    private volatile boolean starting = false;
+    public void start() {
+        System.out.println("尝试启动监控线程...");
+        synchronized (this) {
+            if (starting) {
+            	return;
+            }
+            starting = true;
+        }
+        // 真正启动监控线程...
+    }
+}
+```
+
+对比保护性暂停模式：保护性暂停模式用在一个线程等待另一个线程的执行结果，当条件不满足时线程等待
+
+例子：希望 doInit() 方法仅被调用一次，下面的实现出现的问题：
+
+- 当 t1 线程进入 init() 准备 doInit()，t2 线程进来，initialized 还为f alse，则 t2 就又初始化一次
+- volatile 适合一个线程写，其他线程读的情况，这个代码需要加锁
+
+```java
+public class TestVolatile {
+    volatile boolean initialized = false;
+    
+    void init() {
+        if (initialized) {
+            return;
+        }
+    	doInit();
+    	initialized = true;
+    }
+    private void doInit() {
+    }
+}
+```
+
+# 无锁
+
+## CAS
+
+### 原理
+
+无锁编程：Lock Free
+
+CAS 的全称是 Compare-And-Swap，是 CPU 并发原语
+
+- CAS 并发原语体现在 Java 语言中就是 sun.misc.Unsafe 类的各个方法，调用 UnSafe 类中的 CAS 方法，JVM 会实现出 CAS 汇编指令，这是一种完全依赖于硬件的功能，实现了原子操作
+- CAS 是一种系统原语，原语属于操作系统范畴，是由若干条指令组成 ，用于完成某个功能的一个过程，并且原语的执行必须是连续的，执行过程中不允许被中断，所以 CAS 是一条 CPU 的原子指令，不会造成数据不一致的问题，是线程安全的
+
+底层原理：CAS 的底层是 lock cmpxchg 指令（X86 架构），在单核和多核 CPU 下都能够保证比较交换的原子性
+
+- 程序是在单核处理器上运行，会省略 lock 前缀，单处理器自身会维护处理器内的顺序一致性，不需要 lock 前缀的内存屏障效果
+
+- 程序是在多核处理器上运行，会为 cmpxchg 指令加上 lock 前缀。当某个核执行到带 lock 的指令时，CPU 会执行总线锁定或缓存锁定，将修改的变量写入到主存，这个过程不会被线程的调度机制所打断，保证了多个线程对内存操作的原子性
+
+作用：比较当前工作内存中的值和主物理内存中的值，如果相同则执行规定操作，否则继续比较直到主内存和工作内存的值一致为止
+
+CAS 特点：
+
+- CAS 体现的是无锁并发、无阻塞并发，线程不会陷入阻塞，线程不需要频繁切换状态（上下文切换，系统调用）
+- CAS 是基于乐观锁的思想
+
+CAS 缺点：
+
+- 循环时间长，开销大，因为执行的是循环操作，如果比较不成功一直在循环，最差的情况某个线程一直取到的值和预期值都不一样，就会无限循环导致饥饿，使用 CAS 线程数不要超过 CPU 的核心数
+- 只能保证一个共享变量的原子操作
+   - 对于一个共享变量执行操作时，可以通过循环 CAS 的方式来保证原子操作
+   - 对于多个共享变量操作时，循环 CAS 就无法保证操作的原子性，这个时候只能用锁来保证原子性
+- 引出来 ABA 问题
+
+### 乐观锁
+
+CAS 与 synchronized 总结：
+
+- synchronized 是从悲观的角度出发：总是假设最坏的情况，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会阻塞（共享资源每次只给一个线程使用，其它线程阻塞，用完后再把资源转让给其它线程），因此 synchronized 也称之为悲观锁，ReentrantLock 也是一种悲观锁，性能较差
+- CAS 是从乐观的角度出发：总是假设最好的情况，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据。如果别人修改过，则获取现在最新的值，如果别人没修改过，直接修改共享数据的值，CAS 这种机制也称之为乐观锁，综合性能较好
+
+## Atomic
+
+Atomic类是指一组提供原子操作支持的类，这些类就要用于在多线程环境下进行线程安全的操作。原子操作是指那些不可被中断
+的操作，即在多线程环境中，某个线程执行一个操作时，其他线程无法看到该操作的中间状态，从而避免了线程竞争和数据不一致
+的问题。
+
+### 常用API
+
+常见原子类：AtomicInteger、AtomicBoolean、AtomicLong
+
+构造方法：
+
+- `public AtomicInteger()：`初始化一个默认值为 0 的原子型 Integer
+- `public AtomicInteger(int initialValue)：`初始化一个指定值的原子型 Integer
+
+常用API：
+
+![alt](image/img_20.png)
+
+### 原理分析
+
+AtomicInteger 原理：自旋锁 + CAS 算法
+
+CAS 算法：有 3 个操作数（内存值 V， 旧的预期值 A，要修改的值 B）
+
+- 当旧的预期值 A == 内存值 V 此时可以修改，将 V 改为 B
+- 当旧的预期值 A != 内存值 V 此时不能修改，并重新获取现在的最新值，重新获取的动作就是自旋
+
+分析 getAndSet 方法：
+
+- AtomicInteger
+
+```java
+public final int getAndSet(int newValue) {
+    /**
+    * this: 		当前对象
+    * valueOffset:	内存偏移量，内存地址
+    */
+    return unsafe.getAndSetInt(this, valueOffset, newValue);
+}
+```
+
+valueOffset：偏移量表示该变量值相对于当前对象地址的偏移，Unsafe 就是根据内存偏移地址获取数据
+
+```java
+valueOffset = unsafe.objectFieldOffset
+                (AtomicInteger.class.getDeclaredField("value"));
+//调用本地方法   -->
+public native long objectFieldOffset(Field var1);
+```
+
+- unsafe类：
+
+```java
+// val1: AtomicInteger对象本身，var2: 该对象值得引用地址，var4: 需要变动的数
+public final int getAndSetInt(Object var1, long var2, int var4) {
+    int var5;
+    do {
+        // var5: 用 var1 和 var2 找到的内存中的真实值
+        var5 = this.getIntVolatile(var1, var2);
+    } while(!this.compareAndSwapInt(var1, var2, var5, var4));
+
+    return var5;
+}
+```
+
+var5：从主内存中拷贝到工作内存中的值（每次都要从主内存拿到最新的值到本地内存），然后执行 compareAndSwapInt() 再和主内存的值进行比较，假设方法返回 false，那么就一直执行 while 方法，直到期望的值和真实值一样，修改数据
+
+- 变量 value 用 volatile 修饰，保证了多线程之间的内存可见性，避免线程从工作缓存中获取失效的变量
+
+```java
+private volatile int value;
+```
+
+`CAS 必须借助 volatile 才能读取到共享变量的最新值来实现比较并交换的效果`
+
+分析 getAndUpdate 方法：
+
+- getAndUpdate：
+
+```java
+public final int getAndUpdate(IntUnaryOperator updateFunction) {
+    int prev, next;
+    do {
+        prev = get();	//当前值，cas的期望值
+        next = updateFunction.applyAsInt(prev);//期望值更新到该值
+    } while (!compareAndSet(prev, next));//自旋
+    return prev;
+}
+```
+
+函数式接口：可以自定义操作逻辑
+
+```java
+AtomicInteger a = new AtomicInteger();
+a.getAndUpdate(i -> i + 10);
+```
+
+- compareAndSet：
+
+```java
+public final boolean compareAndSet(int expect, int update) {
+    /**
+    * this: 		当前对象
+    * valueOffset:	内存偏移量，内存地址
+    * expect:		期望的值
+    * update: 		更新的值
+    */
+    return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
+}
+```
+
+### 原子引用--AtomicReferenceDemo.java
+
+原子引用：对 Object 进行原子操作，提供一种读和写都是原子性的对象引用变量
+
+原子引用类：AtomicReference、AtomicStampedReference、AtomicMarkableReference
+
+AtomicReference 类：
+
+- 构造方法：`AtomicReference<T> atomicReference = new AtomicReference<T>()`
+
+- 常用 API：
+
+   - `public final boolean compareAndSet(V expectedValue, V newValue)`：CAS 操作
+   - `public final void set(V newValue)`：将值设置为 newValue
+   - `public final V get()`：返回当前值
+
+### 原子数组
+
+原子数组类：AtomicIntegerArray、AtomicLongArray、AtomicReferenceArray
+
+AtomicIntegerArray 类方法
+
+```java
+/**
+*   i		the index
+* expect 	the expected value
+* update 	the new value
+*/
+public final boolean compareAndSet(int i, int expect, int update) {
+    return compareAndSetRaw(checkedByteOffset(i), expect, update);
+}
+```
+
+### 原子更新器
+
+原子更新器类：AtomicReferenceFieldUpdater、AtomicIntegerFieldUpdater、AtomicLongFieldUpdater
+
+利用字段更新器，可以针对对象的某个域（Field）进行原子操作，只能配合 volatile 修饰的字段使用，否则会出现异常 `IllegalArgumentException: Must be volatile type`
+
+常用 API：
+
+- `static <U> AtomicIntegerFieldUpdater<U> newUpdater(Class<U> c, String fieldName)`：构造方法
+- `abstract boolean compareAndSet(T obj, int expect, int update)`：CAS
+
+
+
+
+
+
+
+
 
 
 

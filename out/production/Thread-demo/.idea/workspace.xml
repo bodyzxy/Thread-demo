@@ -5,14 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="742b0f69-2f96-48b6-b78d-5319b392aa75" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/image/img_9.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/GuardedObject.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_19.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/img_20.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/AtomicReferenceDemo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Thread-demo.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Thread-demo/Thread-demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Thread-demo/Thread-demo.iml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,6 +36,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Application.AlternateDemo.executor&quot;: &quot;Run&quot;,
     &quot;Application.CallableDemo (1).executor&quot;: &quot;Run&quot;,
     &quot;Application.CallableDemo.executor&quot;: &quot;Run&quot;,
     &quot;Application.CompletableFutureApi2Demo.executor&quot;: &quot;Run&quot;,
@@ -49,19 +47,22 @@
     &quot;Application.Dead.executor&quot;: &quot;Run&quot;,
     &quot;Application.FutureApiDemo.executor&quot;: &quot;Run&quot;,
     &quot;Application.GetPriceDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.GuardedObject.executor&quot;: &quot;Debug&quot;,
     &quot;Application.InterruptDemo.executor&quot;: &quot;Run&quot;,
     &quot;Application.LockSupportDemo.executor&quot;: &quot;Run&quot;,
     &quot;Application.NotifyAllDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.OrderDemo.executor&quot;: &quot;Debug&quot;,
     &quot;Application.SpinLock.executor&quot;: &quot;Run&quot;,
     &quot;Application.SynchronizedDemo.executor&quot;: &quot;Run&quot;,
     &quot;Application.TestLiveLock.executor&quot;: &quot;Run&quot;,
+    &quot;Application.TraditionalProducerConsumer.executor&quot;: &quot;Run&quot;,
     &quot;Application.TwoPhaseTerminationDemo.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.UpdateTraditionalProducerConsumer.executor&quot;: &quot;Run&quot;,
     &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
     &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
     &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
     &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/zxy/AllProject/java/Thread-demo/out/production/Thread-demo/src&quot;,
@@ -83,9 +84,9 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.GuardedObject">
-    <configuration name="Dead" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.Dead" />
+  <component name="RunManager" selected="Application.AtomicReferenceDemo">
+    <configuration name="AlternateDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.AlternateDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -97,8 +98,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="GuardedObject" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.GuardedObject" />
+    <configuration name="AtomicReferenceDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.AtomicReferenceDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -110,8 +111,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="InterruptDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.InterruptDemo" />
+    <configuration name="OrderDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.OrderDemo" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -123,8 +124,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="NotifyAllDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.NotifyAllDemo" />
+    <configuration name="TraditionalProducerConsumer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.TraditionalProducerConsumer" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -136,8 +137,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TestLiveLock" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="src.TestLiveLock" />
+    <configuration name="UpdateTraditionalProducerConsumer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="src.UpdateTraditionalProducerConsumer" />
       <module name="Thread-demo" />
       <extension name="coverage">
         <pattern>
@@ -151,11 +152,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.GuardedObject" />
-        <item itemvalue="Application.InterruptDemo" />
-        <item itemvalue="Application.NotifyAllDemo" />
-        <item itemvalue="Application.TestLiveLock" />
-        <item itemvalue="Application.Dead" />
+        <item itemvalue="Application.AtomicReferenceDemo" />
+        <item itemvalue="Application.UpdateTraditionalProducerConsumer" />
+        <item itemvalue="Application.TraditionalProducerConsumer" />
+        <item itemvalue="Application.AlternateDemo" />
+        <item itemvalue="Application.OrderDemo" />
       </list>
     </recent_temporary>
   </component>
@@ -191,7 +192,9 @@
       <workItem from="1723268228623" duration="1356000" />
       <workItem from="1723345737402" duration="502000" />
       <workItem from="1723347102674" duration="1023000" />
-      <workItem from="1723376468050" duration="941000" />
+      <workItem from="1723376468050" duration="10886000" />
+      <workItem from="1723613667194" duration="9131000" />
+      <workItem from="1723694715669" duration="5287000" />
     </task>
     <servers />
   </component>

@@ -1209,3 +1209,429 @@ _交互规则_
 
 _检锁机制_
 
+Double-Checked Locking:双端检锁机制
+
+DCL（双端检锁）机制不一定是线程安全，原因是指令重排的存在，加入volatile就可以禁止指令重排
+
+```java
+public final class Singleton {
+    private Singleton() { }
+    private static Singleton INSTANCE = null;
+    
+    public static Singleton getInstance() {
+        if(INSTANCE == null) { // t2，这里的判断不是线程安全的
+            // 首次访问会同步，而之后的使用没有 synchronized
+            synchronized(Singleton.class) {
+                // 这里是线程安全的判断，防止其他线程在当前线程等待锁的期间完成了初始化
+                if (INSTANCE == null) { 
+                    INSTANCE = new Singleton();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+}
+```
+
+不锁 INSTANCE 的原因：
+
+  - INSTANCE 要重新赋值
+  - INSTANCE 是 null，线程加锁之前需要获取对象的引用，设置对象头，null 没有引用
+
+实现特点：
+
+- 懒惰初始化
+- 首次使用 getInstance() 才使用 synchronized 加锁，后续使用时无需加锁
+- 第一个 if 使用了 INSTANCE 变量，是在同步块之外，但在多线程环境下会产生问题
+
+_DCL问题_
+
+getInstance 方法对应的字节码为：
+
+```angular2html
+0: 	getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+3: 	ifnonnull 		37
+6: 	ldc 			#3 		// class test/Singleton
+8: 	dup
+9: 	astore_0
+10: monitorenter
+11: getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+14: ifnonnull 27
+17: new 			#3 		// class test/Singleton
+20: dup
+21: invokespecial 	#4 		// Method "<init>":()V
+24: putstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+27: aload_0
+28: monitorexit
+29: goto 37
+32: astore_1
+33: aload_0
+34: monitorexit
+35: aload_1
+36: athrow
+37: getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+40: areturn
+```
+
+- 17 表示创建对象，将对象引用入栈
+- 20 表示复制一份对象引用，引用地址
+- 21 表示利用一个对象引用，调用构造方法初始化对象
+- 24 表示利用一个对象引用，赋值给 static INSTANCE
+
+步骤 21 和 24 之间不存在数据依赖关系，而且无论重排前后，程序的执行结果在单线程中并没有改变，因此这种重排优化是允许的
+
+- 关键在于 0:getstatic 这行代码在 monitor 控制之外，可以越过 monitor 读取 INSTANCE 变量的值
+- 当其他线程访问 INSTANCE 不为 null 时，由于 INSTANCE 实例未必已初始化，那么 t2 拿到的是将是一个未初始化完毕的单例返回，这就造成了线程安全的问题
+
+![alt](image/img_19.png)
+
+解决办法：
+
+指令重排只会保证串行语义的执行一致性（单线程），但并不会关系多线程间的语义一致性
+
+引入 volatile，来保证出现指令重排的问题，从而保证单例模式的线程安全性：
+
+```java
+private static volatile SingletonDemo INSTANCE = null;
+```
+
+## ha-be
+
+happens-before 先行发生
+
+ava 内存模型具备一些先天的“有序性”，即不需要通过任何同步手段（volatile、synchronized 等）就能够得到保证的安全，这个通常也称为 happens-before 原则，它是可见性与有序性的一套规则总结
+
+不符合 happens-before 规则，JMM 并不能保证一个线程的可见性和有序性
+
+1. 程序次序规则 (Program Order Rule)：一个线程内，逻辑上书写在前面的操作先行发生于书写在后面的操作 ，因为多个操作之间有先后依赖关系，则不允许对这些操作进行重排序
+
+2. 锁定规则 (Monitor Lock Rule)：一个 unlock 操作先行发生于后面（时间的先后）对同一个锁的 lock 操作，所以线程解锁 m 之前对变量的写（解锁前会刷新到主内存中），对于接下来对 m 加锁的其它线程对该变量的读可见
+
+3. volatile 变量规则 (Volatile Variable Rule)：对 volatile 变量的写操作先行发生于后面对这个变量的读
+
+4. 传递规则 (Transitivity)：具有传递性，如果操作 A 先行发生于操作 B，而操作 B 又先行发生于操作 C，则可以得出操作 A 先行发生于操作 C
+
+5. 线程启动规则 (Thread Start Rule)：Thread 对象的 start()方 法先行发生于此线程中的每一个操作
+
+6. 线程中断规则 (Thread Interruption Rule)：对线程 interrupt() 方法的调用先行发生于被中断线程的代码检测到中断事件的发生
+
+7. 线程终止规则 (Thread Termination Rule)：线程中所有的操作都先行发生于线程的终止检测，可以通过 Thread.join() 方法结束、Thread.isAlive() 的返回值手段检测到线程已经终止执行
+
+8. 对象终结规则（Finaizer Rule）：一个对象的初始化完成（构造函数执行结束）先行发生于它的 finalize() 方法的开始
+
+## 设计模式
+
+### 终止模式
+
+终止模式之两阶段终止模式：停止标记用 volatile 是为了保证该变量在多个线程之间的可见性
+
+```java
+class TwoPhaseTermination {
+    // 监控线程
+    private Thread monitor;
+    // 停止标记
+    private volatile boolean stop = false;;
+
+    // 启动监控线程
+    public void start() {
+        monitor = new Thread(() -> {
+            while (true) {
+                Thread thread = Thread.currentThread();
+                if (stop) {
+                    System.out.println("后置处理");
+                    break;
+                }
+                try {
+                    Thread.sleep(1000);// 睡眠
+                    System.out.println(thread.getName() + "执行监控记录");
+                } catch (InterruptedException e) {
+                   	System.out.println("被打断，退出睡眠");
+                }
+            }
+        });
+        monitor.start();
+    }
+
+    // 停止监控线程
+    public void stop() {
+        stop = true;
+        monitor.interrupt();// 让线程尽快退出Timed Waiting
+    }
+}
+// 测试
+public static void main(String[] args) throws InterruptedException {
+    TwoPhaseTermination tpt = new TwoPhaseTermination();
+    tpt.start();
+    Thread.sleep(3500);
+    System.out.println("停止监控");
+    tpt.stop();
+}
+```
+
+### Balking
+
+Balking （犹豫）模式用在一个线程发现另一个线程或本线程已经做了某一件相同的事，那么本线程就无需再做了，直接结束返回
+
+```java
+public class MonitorService {
+    // 用来表示是否已经有线程已经在执行启动了
+    private volatile boolean starting = false;
+    public void start() {
+        System.out.println("尝试启动监控线程...");
+        synchronized (this) {
+            if (starting) {
+            	return;
+            }
+            starting = true;
+        }
+        // 真正启动监控线程...
+    }
+}
+```
+
+对比保护性暂停模式：保护性暂停模式用在一个线程等待另一个线程的执行结果，当条件不满足时线程等待
+
+例子：希望 doInit() 方法仅被调用一次，下面的实现出现的问题：
+
+- 当 t1 线程进入 init() 准备 doInit()，t2 线程进来，initialized 还为f alse，则 t2 就又初始化一次
+- volatile 适合一个线程写，其他线程读的情况，这个代码需要加锁
+
+```java
+public class TestVolatile {
+    volatile boolean initialized = false;
+    
+    void init() {
+        if (initialized) {
+            return;
+        }
+    	doInit();
+    	initialized = true;
+    }
+    private void doInit() {
+    }
+}
+```
+
+# 无锁
+
+## CAS
+
+### 原理
+
+无锁编程：Lock Free
+
+CAS 的全称是 Compare-And-Swap，是 CPU 并发原语
+
+- CAS 并发原语体现在 Java 语言中就是 sun.misc.Unsafe 类的各个方法，调用 UnSafe 类中的 CAS 方法，JVM 会实现出 CAS 汇编指令，这是一种完全依赖于硬件的功能，实现了原子操作
+- CAS 是一种系统原语，原语属于操作系统范畴，是由若干条指令组成 ，用于完成某个功能的一个过程，并且原语的执行必须是连续的，执行过程中不允许被中断，所以 CAS 是一条 CPU 的原子指令，不会造成数据不一致的问题，是线程安全的
+
+底层原理：CAS 的底层是 lock cmpxchg 指令（X86 架构），在单核和多核 CPU 下都能够保证比较交换的原子性
+
+- 程序是在单核处理器上运行，会省略 lock 前缀，单处理器自身会维护处理器内的顺序一致性，不需要 lock 前缀的内存屏障效果
+
+- 程序是在多核处理器上运行，会为 cmpxchg 指令加上 lock 前缀。当某个核执行到带 lock 的指令时，CPU 会执行总线锁定或缓存锁定，将修改的变量写入到主存，这个过程不会被线程的调度机制所打断，保证了多个线程对内存操作的原子性
+
+作用：比较当前工作内存中的值和主物理内存中的值，如果相同则执行规定操作，否则继续比较直到主内存和工作内存的值一致为止
+
+CAS 特点：
+
+- CAS 体现的是无锁并发、无阻塞并发，线程不会陷入阻塞，线程不需要频繁切换状态（上下文切换，系统调用）
+- CAS 是基于乐观锁的思想
+
+CAS 缺点：
+
+- 循环时间长，开销大，因为执行的是循环操作，如果比较不成功一直在循环，最差的情况某个线程一直取到的值和预期值都不一样，就会无限循环导致饥饿，使用 CAS 线程数不要超过 CPU 的核心数
+- 只能保证一个共享变量的原子操作
+   - 对于一个共享变量执行操作时，可以通过循环 CAS 的方式来保证原子操作
+   - 对于多个共享变量操作时，循环 CAS 就无法保证操作的原子性，这个时候只能用锁来保证原子性
+- 引出来 ABA 问题
+
+### 乐观锁
+
+CAS 与 synchronized 总结：
+
+- synchronized 是从悲观的角度出发：总是假设最坏的情况，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会阻塞（共享资源每次只给一个线程使用，其它线程阻塞，用完后再把资源转让给其它线程），因此 synchronized 也称之为悲观锁，ReentrantLock 也是一种悲观锁，性能较差
+- CAS 是从乐观的角度出发：总是假设最好的情况，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据。如果别人修改过，则获取现在最新的值，如果别人没修改过，直接修改共享数据的值，CAS 这种机制也称之为乐观锁，综合性能较好
+
+## Atomic
+
+Atomic类是指一组提供原子操作支持的类，这些类就要用于在多线程环境下进行线程安全的操作。原子操作是指那些不可被中断
+的操作，即在多线程环境中，某个线程执行一个操作时，其他线程无法看到该操作的中间状态，从而避免了线程竞争和数据不一致
+的问题。
+
+### 常用API
+
+常见原子类：AtomicInteger、AtomicBoolean、AtomicLong
+
+构造方法：
+
+- `public AtomicInteger()：`初始化一个默认值为 0 的原子型 Integer
+- `public AtomicInteger(int initialValue)：`初始化一个指定值的原子型 Integer
+
+常用API：
+
+![alt](image/img_20.png)
+
+### 原理分析
+
+AtomicInteger 原理：自旋锁 + CAS 算法
+
+CAS 算法：有 3 个操作数（内存值 V， 旧的预期值 A，要修改的值 B）
+
+- 当旧的预期值 A == 内存值 V 此时可以修改，将 V 改为 B
+- 当旧的预期值 A != 内存值 V 此时不能修改，并重新获取现在的最新值，重新获取的动作就是自旋
+
+分析 getAndSet 方法：
+
+- AtomicInteger
+
+```java
+public final int getAndSet(int newValue) {
+    /**
+    * this: 		当前对象
+    * valueOffset:	内存偏移量，内存地址
+    */
+    return unsafe.getAndSetInt(this, valueOffset, newValue);
+}
+```
+
+valueOffset：偏移量表示该变量值相对于当前对象地址的偏移，Unsafe 就是根据内存偏移地址获取数据
+
+```java
+valueOffset = unsafe.objectFieldOffset
+                (AtomicInteger.class.getDeclaredField("value"));
+//调用本地方法   -->
+public native long objectFieldOffset(Field var1);
+```
+
+- unsafe类：
+
+```java
+// val1: AtomicInteger对象本身，var2: 该对象值得引用地址，var4: 需要变动的数
+public final int getAndSetInt(Object var1, long var2, int var4) {
+    int var5;
+    do {
+        // var5: 用 var1 和 var2 找到的内存中的真实值
+        var5 = this.getIntVolatile(var1, var2);
+    } while(!this.compareAndSwapInt(var1, var2, var5, var4));
+
+    return var5;
+}
+```
+
+var5：从主内存中拷贝到工作内存中的值（每次都要从主内存拿到最新的值到本地内存），然后执行 compareAndSwapInt() 再和主内存的值进行比较，假设方法返回 false，那么就一直执行 while 方法，直到期望的值和真实值一样，修改数据
+
+- 变量 value 用 volatile 修饰，保证了多线程之间的内存可见性，避免线程从工作缓存中获取失效的变量
+
+```java
+private volatile int value;
+```
+
+`CAS 必须借助 volatile 才能读取到共享变量的最新值来实现比较并交换的效果`
+
+分析 getAndUpdate 方法：
+
+- getAndUpdate：
+
+```java
+public final int getAndUpdate(IntUnaryOperator updateFunction) {
+    int prev, next;
+    do {
+        prev = get();	//当前值，cas的期望值
+        next = updateFunction.applyAsInt(prev);//期望值更新到该值
+    } while (!compareAndSet(prev, next));//自旋
+    return prev;
+}
+```
+
+函数式接口：可以自定义操作逻辑
+
+```java
+AtomicInteger a = new AtomicInteger();
+a.getAndUpdate(i -> i + 10);
+```
+
+- compareAndSet：
+
+```java
+public final boolean compareAndSet(int expect, int update) {
+    /**
+    * this: 		当前对象
+    * valueOffset:	内存偏移量，内存地址
+    * expect:		期望的值
+    * update: 		更新的值
+    */
+    return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
+}
+```
+
+### 原子引用--AtomicReferenceDemo.java
+
+原子引用：对 Object 进行原子操作，提供一种读和写都是原子性的对象引用变量
+
+原子引用类：AtomicReference、AtomicStampedReference、AtomicMarkableReference
+
+AtomicReference 类：
+
+- 构造方法：`AtomicReference<T> atomicReference = new AtomicReference<T>()`
+
+- 常用 API：
+
+   - `public final boolean compareAndSet(V expectedValue, V newValue)`：CAS 操作
+   - `public final void set(V newValue)`：将值设置为 newValue
+   - `public final V get()`：返回当前值
+
+### 原子数组
+
+原子数组类：AtomicIntegerArray、AtomicLongArray、AtomicReferenceArray
+
+AtomicIntegerArray 类方法
+
+```java
+/**
+*   i		the index
+* expect 	the expected value
+* update 	the new value
+*/
+public final boolean compareAndSet(int i, int expect, int update) {
+    return compareAndSetRaw(checkedByteOffset(i), expect, update);
+}
+```
+
+### 原子更新器--AtomicUpdateDemo.java
+
+原子更新器类：AtomicReferenceFieldUpdater、AtomicIntegerFieldUpdater、AtomicLongFieldUpdater
+
+利用字段更新器，可以针对对象的某个域（Field）进行原子操作，只能配合 volatile 修饰的字段使用，否则会出现异常 `IllegalArgumentException: Must be volatile type`
+
+常用 API：
+
+- `static <U> AtomicIntegerFieldUpdater<U> newUpdater(Class<U> c, String fieldName)`：构造方法
+- `abstract boolean compareAndSet(T obj, int expect, int update)`：CAS
+
+### 原子累加器
+
+原子累加器类：LongAdder、DoubleAdder、LongAccumulator、DoubleAccumulator
+
+LongAdder 和 LongAccumulator 区别：
+
+相同点：
+
+- LongAddr 与 LongAccumulator 类都是使用非阻塞算法 CAS 实现的
+- LongAddr 类是 LongAccumulator 类的一个特例，只是 LongAccumulator 提供了更强大的功能，可以自定义累加规则，当accumulatorFunction 为 null 时就等价于 LongAddr
+
+不同点：
+
+- 调用 casBase 时，LongAccumulator 使用 function.applyAsLong(b = base, x) 来计算，LongAddr 使用 casBase(b = base, b + x)
+
+- LongAccumulator 类功能更加强大，构造方法参数中
+
+  - accumulatorFunction 是一个双目运算器接口，可以指定累加规则，比如累加或者相乘，其根据输入的两个参数返回一个计算值，LongAdder 内置累加规则
+  - identity 则是 LongAccumulator 累加器的初始值，LongAccumulator 可以为累加器提供非0的初始值，而 LongAdder 只能提供默认的 0
+
+
+
+
+
+
+
